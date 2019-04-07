@@ -32,4 +32,5 @@ This project is built with Node.js and Electron. To develop for this have Node.j
 Use `npm run package-win32` to use `electron packager` to automatically build the electron app into a Win32 executable.  
 
 ## Like what I do?
+I'm a college student, so if you enjoy my work please donate:  
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T1TDCS)
