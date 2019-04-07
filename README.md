@@ -19,7 +19,7 @@ Upon opening jrnl it will automatically open up the day's entry. If an entry doe
 
 ## Installing
 ### For Personal Use  
-Download the applicable folder from the **releases** folder in this repo and run the executable.
+Download the latest version from the [**releases**](https://github.com/Blarfnip/JRNL/releases/master) tab in this repo and run the executable.
 
 ### For Development
 This project is built with Node.js and Electron. To develop for this have Node.js installed and do the following:
@@ -29,7 +29,7 @@ This project is built with Node.js and Electron. To develop for this have Node.j
 4. run `npm start` to open application  
 
 #### To build an executable
-Use [epi](https://github.com/Urucas/electron-packager-interactive) to build the electron app into an executable.  
+Use `npm run package-win32` to use `electron packager` to automatically build the electron app into a Win32 executable.  
 
 ## Like what I do?
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T1TDCS)
