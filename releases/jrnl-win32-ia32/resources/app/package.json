@@ -1,0 +1,19 @@
+{
+  "name": "jrnl",
+  "version": "1.0.0",
+  "description": "Journal",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package-win32": "electron-packager . --overwrite --platform=win32 --arch=ia32 --icon=./icon.ico --prune=true --out=../releases"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^4.0.6",
+    "electron-packager": "^13.1.1"
+  },
+  "dependencies": {
+    "jquery": "^3.3.1"
+  }
+}
