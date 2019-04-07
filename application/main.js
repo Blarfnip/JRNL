@@ -5,6 +5,7 @@ let win
 
 const menu = new Menu()
 
+//Create Hotkey for Esc to close application
 menu.append(new MenuItem({
   label: 'Quit',
   accelerator: 'Esc',
@@ -14,12 +15,11 @@ menu.append(new MenuItem({
    }
 }))
 
+//Create Hotkey for Ctrl/Cmd+S to save entry
 menu.append(new MenuItem({
     label: 'Save',
     accelerator: 'CmdOrCtrl+S',
     click: () => { 
-        //console.log("HELLO");
-        //ipcMain.send('saveFile', 'asda');
         win.webContents.send('saveFile');
      }
   }))
@@ -32,12 +32,15 @@ function createWindow () {
   win.loadURL(`file://${__dirname}/index.html`)
 
   // Open the DevTools.
+  //Uncomment this to debug
   //win.webContents.openDevTools()
 
+  //When page loads give it the correct path to save entries
   win.webContents.on('did-finish-load', () => {
     win.webContents.send('updateDocPath', app.getPath('documents'))
   });
 
+  //Setup menu(hotkeys)
   win.setMenu(menu);
 
   // Emitted when the window is closed.
@@ -45,7 +48,6 @@ function createWindow () {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-
     win = null
   })
 }
@@ -72,6 +74,3 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

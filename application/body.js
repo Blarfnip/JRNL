@@ -8,7 +8,9 @@ var fileExtension = ".jrnl";
 var filledColor = "#93bbd6";
 var highLightedColor = "#dbace2";
 
+//This file is for all code that runs locally in the webpage
 
+//Saves files to Documents/jrnl Entries
 ipcRenderer.on('updateDocPath',(event, arg) => {
     console.log(arg);
     documentsPath = arg + "\\jrnl Entries";
@@ -19,21 +21,20 @@ ipcRenderer.on('updateDocPath',(event, arg) => {
     createPage();
 });
 
+//Saves file when Ctrl/Cmd+S is pressed
 ipcRenderer.on('saveFile',(event, arg) => {
     saveFile(currentDateString);
 });
 
 
-$(document).ready(function() {
-   
-});
-
 function createPage() {
+    //Create summernote instance that autofocuses and uses the minimal ui
     $('#summernote').summernote({
         airMode: true,
         focus: true
     });
 
+    //Manually build the calendar
     dates.push(createArray(31)); //January
     dates.push(createArray(28)); //February
     dates.push(createArray(31)); //March
@@ -52,7 +53,9 @@ function createPage() {
     onOpen();
 }
 
+//Constructs the calendar
 function createCalendar(dates) {
+    //Builds the html for the calendar
     var htmlText = "";
     for(var m = 0; m < dates.length; m++) {
         htmlText += "<div class = 'monthCol'>";
@@ -66,8 +69,8 @@ function createCalendar(dates) {
     htmlText += ""
     $("#calendar").html(htmlText);
 
+    //Binds a click listener so each button opens its entry
     document.getElementById("calendar").addEventListener("click",function(e) {
-
         for(var m = 0; m < dates.length; m++) {
             for(var d = 0; d < dates[m].length; d++) {
                 var month = (m < 10 ? '0' : '') + m;
@@ -82,9 +85,9 @@ function createCalendar(dates) {
 
 }
 
+//loads entry
 function loadOtherDate(m, d) {
  
-
     if(dates[m][d]) {
         var month = (m < 10 ? '0' : '') + m;
         var date = (d < 10 ? '0' : '') + d;
@@ -97,6 +100,7 @@ function loadOtherDate(m, d) {
     }
 }
 
+//returns date string for current day
 function getTodaysDateString() {
     var date = new Date();
     var m = (date.getMonth() < 10 ? '0' : '') + date.getMonth();
@@ -105,15 +109,11 @@ function getTodaysDateString() {
 }
 
 
-
+//Called when the application opens
 function onOpen() {
-    //check if already entry on this date
-    //open if true
-    //else make new one
-    //update calendar
-
     var fileName = getTodaysDateString();
 
+    //If there exists an entry for today, open it. Else create a new entry.
     if(fs.existsSync(documentsPath + "\\" + fileName + fileExtension)) {
         openFile(fileName);
     } else {
@@ -126,6 +126,7 @@ function onOpen() {
     
 }
 
+//updates calendar with colors depending on if entry exists
 function updateCalendar() {
     for(var m = 0; m < dates.length; m++) {
         for(var d = 0; d < dates[m].length; d++) {
@@ -148,6 +149,7 @@ function updateCalendar() {
     }
 }
 
+//Creates 1D array filled with false
 function createArray(size) {
     var arr = [];
     for(var i = 0; i < size; i++) {
@@ -194,6 +196,7 @@ function openFile(name) {
     });
 }
 
+//Converts the datestring to a human readable date "MONTH/DATE" 
 function updateDateDisplay(dateString) {
     var month = parseInt(dateString.substring(0, 2)) + 1;
     var date = parseInt(dateString.substring(2, 4)) + 1;
