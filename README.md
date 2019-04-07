@@ -19,7 +19,7 @@ Upon opening jrnl it will automatically open up the day's entry. If an entry doe
 
 ## Installing
 ### For Personal Use  
-Download the latest version from the [**releases**](https://github.com/Blarfnip/JRNL/releases/master) tab in this repo and run the executable.
+Download the latest version from the [**releases**](https://github.com/Blarfnip/JRNL/releases/stable) tab in this repo and run the executable.
 
 ### For Development
 This project is built with Node.js and Electron. To develop for this have Node.js installed and do the following:
