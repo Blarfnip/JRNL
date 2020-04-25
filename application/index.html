@@ -14,8 +14,8 @@
     <script src="http://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.js"></script> 
 
     <!-- include summernote css/js -->
-    <link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.11/summernote.css" rel="stylesheet">
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.11/summernote.js"></script> 
+    <link href="summernote.css" rel="stylesheet">
+    <script src="summernote.js"></script> 
 
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
@@ -28,12 +28,19 @@
   </head>
   <body>
         <div class="titlebar"></div>
-        <div id="date" class="dateDisplay"></div>
+        <div id="date" class="dateDisplay noselect"></div>
         <div id="entry" class="entry">
-            <div id="summernote">  </div>
+            <div id="summernote"></div>
         </div>
         
         <div id="calendar" class="calendar"></div>
+        <div class="yearSelection">
+          <div class="yearButtonHolder">
+            <div id="yearSelectPrevious" class="yearButton noselect"><</div>
+            <div id="yearDisplay" class="yearDisplay noselect">2020</div>
+            <div id="yearSelectNext" class="yearButton noselect">></div>
+          </div>
+        </div>
         
   </body>
 </html>

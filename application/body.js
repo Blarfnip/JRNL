@@ -2,11 +2,13 @@ var fs = require('fs');
 var ipcRenderer = require('electron').ipcRenderer;
 
 var dates = [];
+var currentCalendarYear;
 var documentsPath;
 var currentDateString = "0000";
 var fileExtension = ".jrnl";
 var filledColor = "#93bbd6";
 var highLightedColor = "#dbace2";
+var isPastReadonly = true;
 
 //This file is for all code that runs locally in the webpage
 
@@ -26,6 +28,16 @@ ipcRenderer.on('saveFile',(event, arg) => {
     saveFile(currentDateString);
 });
 
+//Saves file when Ctrl/Cmd+S is pressed
+ipcRenderer.on('prevYear',(event, arg) => {
+    setYear(currentCalendarYear - 1)
+});
+
+
+//Saves file when Ctrl/Cmd+S is pressed
+ipcRenderer.on('nextYear',(event, arg) => {
+    setYear(currentCalendarYear + 1)
+});
 
 function createPage() {
     //Create summernote instance that autofocuses and uses the minimal ui
@@ -33,6 +45,19 @@ function createPage() {
         airMode: true,
         focus: true
     });
+
+
+
+    $('#yearSelectPrevious').on('click', function() {setYear(currentCalendarYear - 1)});
+    $('#yearSelectNext').on('click', function() {setYear(currentCalendarYear + 1)});
+
+    var date = new Date();
+    setYear(date.getFullYear());
+
+    onOpen();
+}
+
+function buildCalendar() {
 
     //Manually build the calendar
     dates.push(createArray(31)); //January
@@ -48,21 +73,29 @@ function createPage() {
     dates.push(createArray(30)); //November
     dates.push(createArray(31)); //December
 
-    createCalendar(dates);
+    createCalendar(dates, currentCalendarYear);
 
-    onOpen();
+}
+
+function setYear(year) {
+    currentCalendarYear = year;   
+    console.log("Setting year: " + year); 
+    $('#yearDisplay').html(year + "");
+
+    buildCalendar();
+    updateCalendar();
 }
 
 //Constructs the calendar
-function createCalendar(dates) {
+function createCalendar(dates, year) {
     //Builds the html for the calendar
     var htmlText = "";
-    for(var m = 0; m < dates.length; m++) {
+    for(var m = 1; m <= dates.length; m++) {
         htmlText += "<div class = 'monthCol'>";
-        for(var d = 0; d < dates[m].length; d++) {
+        for(var d = 1; d <= dates[m - 1].length; d++) {
             var month = (m < 10 ? '0' : '') + m;
             var date = (d < 10 ? '0' : '') + d;
-            htmlText += "<div class='day' id='" + month + date + "'></div>";
+            htmlText += "<div class='day' id='" + month + date + year + "'></div>";
         }
         htmlText += "</div>";
     }
@@ -71,12 +104,12 @@ function createCalendar(dates) {
 
     //Binds a click listener so each button opens its entry
     document.getElementById("calendar").addEventListener("click",function(e) {
-        for(var m = 0; m < dates.length; m++) {
-            for(var d = 0; d < dates[m].length; d++) {
+        for(var m = 1; m <= dates.length; m++) {
+            for(var d = 1; d <= dates[m - 1].length; d++) {
                 var month = (m < 10 ? '0' : '') + m;
                 var date = (d < 10 ? '0' : '') + d;
-                if(e.target && e.target.id == month +""+ date) {
-                    loadOtherDate(m, d);
+                if(e.target && e.target.id == month +""+ date+""+year) {
+                    loadOtherDate(m, d, year);
                     updateCalendar();
                 }
             }
@@ -86,16 +119,18 @@ function createCalendar(dates) {
 }
 
 //loads entry
-function loadOtherDate(m, d) {
+function loadOtherDate(m, d, y) {
  
     if(dates[m][d]) {
         var month = (m < 10 ? '0' : '') + m;
         var date = (d < 10 ? '0' : '') + d;
-        if((month + "" + date) == currentDateString) return;
+        var year = y;
+        if((month + "" + date + "" + year) == currentDateString) return;
 
-        console.log("change file: " + month + date);
-        saveFile(currentDateString);
-        currentDateString = month + date;
+        if(!isPastReadonly || currentDateString == getTodaysDateString()) {
+            saveFile(currentDateString);
+        }
+        currentDateString = month + "" + date + "" + year;
         openFile(currentDateString);
     }
 }
@@ -103,9 +138,10 @@ function loadOtherDate(m, d) {
 //returns date string for current day
 function getTodaysDateString() {
     var date = new Date();
-    var m = (date.getMonth() < 10 ? '0' : '') + date.getMonth();
-    var d = ((date.getDate() - 1) < 10 ? '0' : '') + (date.getDate() - 1);
-    return m + "" + d;
+    var m = ((date.getMonth() + 1) < 10 ? '0' : '') + (date.getMonth() + 1);
+    var d = (date.getDate() < 10 ? '0' : '') + date.getDate();
+    var y = date.getFullYear();
+    return m + "" + d + "" + y;
 }
 
 
@@ -128,16 +164,16 @@ function onOpen() {
 
 //updates calendar with colors depending on if entry exists
 function updateCalendar() {
-    for(var m = 0; m < dates.length; m++) {
-        for(var d = 0; d < dates[m].length; d++) {
-            var month = (m < 10 ? '0' : '') + m;
-            var date = (d < 10 ? '0' : '') + d;
-            var dateString = month + "" + date;
+    for(var m = 1; m <= dates.length; m++) {
+        for(var d = 1; d <= dates[m - 1].length; d++) {
+            var month = (m < 10 ? '0' : '') + (m);
+            var date = (d < 10 ? '0' : '') + (d);
+            var year = currentCalendarYear + "";
+            var dateString = month + "" + date + "" + year;
             var datePath = documentsPath + "\\" + dateString + fileExtension;
 
-            if(fs.existsSync(datePath)) {
+            if(fs.existsSync(datePath) || dateString == getTodaysDateString()) {
                 $("#" + dateString).css("background-color", filledColor);
-                console.log(dateString + " exists");
                 dates[m][d] = true;
 
                 if(currentDateString == dateString) {
@@ -168,21 +204,33 @@ function saveFile(name) {
     var content = $("#summernote").summernote('code');
     var fileName = documentsPath + "\\" + name + fileExtension;
 
-    fs.writeFile(fileName, content, function (err) {
-        if(err){
-            alert("An error ocurred creating the file "+ err.message)
+    if($("#summernote").summernote('isEmpty')) {
+        if(fs.existsSync(fileName)) {
+            fs.unlinkSync(fileName);
         }
-        
-        console.log("The file has been succesfully saved at " + fileName);
-    });
 
-    ipcRenderer.send('done-saving');
+        ipcRenderer.send('done-saving');
+        console.log("No content to save. Aborted. " + fileName);
+        return;
+    } else {
+        fs.writeFile(fileName, content, function (err) {
+            if(err){
+                alert("An error ocurred creating the file "+ err.message)
+            }
+            
+            console.log("The file has been succesfully saved at " + fileName);
+        });
+    
+        ipcRenderer.send('done-saving');
+    
+    }
+
 }
 
 function openFile(name) {
     
     var filepath = documentsPath + "\\" +  name + fileExtension;
-    console.log("opening file " + filepath);
+    console.log("Opening file " + filepath);
 
     fs.readFile(filepath, 'utf-8', (err, data) => {
         if(err){
@@ -192,16 +240,24 @@ function openFile(name) {
 
         // Change how to handle the file content
         updateDateDisplay(name);
+
         $("#summernote").summernote('code', data);
+
+        if(isPastReadonly && name != getTodaysDateString()) {
+            $("#summernote").summernote('disable');
+        } else {
+            $("#summernote").summernote('enable');
+        }
     });
 }
 
 //Converts the datestring to a human readable date "MONTH/DATE" 
 function updateDateDisplay(dateString) {
-    var month = parseInt(dateString.substring(0, 2)) + 1;
-    var date = parseInt(dateString.substring(2, 4)) + 1;
+    var month = parseInt(dateString.substring(0, 2));
+    var date = parseInt(dateString.substring(2, 4));
+    var year = parseInt(dateString.substring(4, 8));
     month = (month < 10 ? '0' : '') + month;
     date = (date < 10 ? '0' : '') + date;
-    var adjustedName = month + "/" + date;
+    var adjustedName = month + "/" + date + "/" + year;
     $("#date").html(adjustedName);
 }

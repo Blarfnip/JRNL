@@ -24,6 +24,25 @@ menu.append(new MenuItem({
      }
   }))
 
+  //Create Hotkey for Ctrl/Cmd+S to save entry
+  menu.append(new MenuItem({
+    label: 'Previous Year',
+    accelerator: 'Alt+Left',
+    click: () => { 
+        win.webContents.send('prevYear');
+    }
+  }))
+
+
+  //Create Hotkey for Ctrl/Cmd+S to save entry
+  menu.append(new MenuItem({
+    label: 'Previous Year',
+    accelerator: 'Alt+Right',
+    click: () => { 
+        win.webContents.send('nextYear');
+    }
+  }))
+
 function createWindow () {
   // Create the browser window.
   win = new BrowserWindow({ width: 950, height: 600, frame: false, backgroundColor: "#836c89" })
@@ -33,7 +52,7 @@ function createWindow () {
 
   // Open the DevTools.
   //Uncomment this to debug
-  //win.webContents.openDevTools()
+  // win.webContents.openDevTools()
 
   //When page loads give it the correct path to save entries
   win.webContents.on('did-finish-load', () => {
