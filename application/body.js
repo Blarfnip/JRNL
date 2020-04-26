@@ -253,7 +253,7 @@ function onOpen() {
     currentDateString = fileName;
     updateCalendar();
     updateTheme();
-    
+    $('.loadScreen').fadeOut(500);
 }
 
 //updates calendar with colors depending on if entry exists

@@ -72,6 +72,7 @@ body {
     margin: 2px;
     width: 8px;
     height: 8px;
+    border-radius: 2px;
 }
 
 .yearSelection {
@@ -80,6 +81,15 @@ body {
     
     width: 150px;
     right: 3%;
+}
+
+.loadScreen {
+    position: absolute;
+    top: 0%;
+    left: 0%;
+    right: 0%;
+    bottom: 0%;
+    background-color: #836c89 ;
 }
 
 .yearButtonHolder {
