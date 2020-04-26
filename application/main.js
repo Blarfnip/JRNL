@@ -1,47 +1,64 @@
 const { app, BrowserWindow ,Menu, MenuItem} = require('electron')
+var fs = require('fs');
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 
 const menu = new Menu()
+var config = {
+  "Hotkeys": {
+      "NextTheme": "Alt+=",
+      "NextYear": "Alt+PageUp",
+      "PreviousTheme": "Alt+-",
+      "PreviousYear": "Alt+PageDown",
+      "Quit": "Esc",
+      "Save": "CmdOrCtrl+S",
+      "SelectAboveEntry": "Alt+Up",
+      "SelectBelowEntry": "Alt+Down",
+      "SelectLeftEntry": "Alt+Left",
+      "SelectRightEntry": "Alt+Right"
+  },
+  "Settings": {
+      "CurrentTheme": 0,
+      "IsPastReadOnly": true
+  },
+  "themes": [
+      {
+          "base": {
+              "background-color": "#836c89",
+              "color": "#e0d5e2",
+              "font-family": "'Raleway', sans-serif;"
+          },
+          "emptyDate": {
+              "background-color": "#a99aad"
+          },
+          "selectedEntry": {
+              "background-color": "#dbace2"
+          },
+          "unselectedEntry": {
+              "background-color": "#93bbd6"
+          }
+      },
+      {
+          "base": {
+              "background-color": "#ffffff",
+              "color": "#000000",
+              "font-family": "'Raleway', sans-serif;"
+          },
+          "emptyDate": {
+              "background-color": "#222222"
+          },
+          "selectedEntry": {
+              "background-color": "#888888"
+          },
+          "unselectedEntry": {
+              "background-color": "#444444"
+          }
+      }
+  ]
+};
 
-//Create Hotkey for Esc to close application
-menu.append(new MenuItem({
-  label: 'Quit',
-  accelerator: 'Esc',
-  click: () => { 
-    win.close()
-    app.quit()
-   }
-}))
-
-//Create Hotkey for Ctrl/Cmd+S to save entry
-menu.append(new MenuItem({
-    label: 'Save',
-    accelerator: 'CmdOrCtrl+S',
-    click: () => { 
-        win.webContents.send('saveFile');
-     }
-  }))
-
-  //Create Hotkey for Ctrl/Cmd+S to save entry
-  menu.append(new MenuItem({
-    label: 'Previous Year',
-    accelerator: 'Alt+Left',
-    click: () => { 
-        win.webContents.send('prevYear');
-    }
-  }))
-
-
-  //Create Hotkey for Ctrl/Cmd+S to save entry
-  menu.append(new MenuItem({
-    label: 'Previous Year',
-    accelerator: 'Alt+Right',
-    click: () => { 
-        win.webContents.send('nextYear');
-    }
-  }))
 
 function createWindow () {
   // Create the browser window.
@@ -54,13 +71,14 @@ function createWindow () {
   //Uncomment this to debug
   // win.webContents.openDevTools()
 
+
   //When page loads give it the correct path to save entries
   win.webContents.on('did-finish-load', () => {
-    win.webContents.send('updateDocPath', app.getPath('documents'))
+    loadConfig();
+
+
   });
 
-  //Setup menu(hotkeys)
-  win.setMenu(menu);
 
   // Emitted when the window is closed.
   win.on('closed', () => {
@@ -70,6 +88,121 @@ function createWindow () {
     win = null
   })
 }
+
+function loadConfig() {
+  var filepath = "config.json";
+  console.log("Opening file " + filepath);
+
+  if(fs.existsSync("config.json")) {
+    fs.readFile(filepath, 'utf-8', (err, data) => {
+      if(err){
+          return;
+      }
+      config = JSON.parse(data);
+      loadConfigData(config);
+    });
+  } else {
+    var data = JSON.stringify(config);
+    fs.writeFile("config.json", data, (err) => {
+      loadConfigData(config);
+    });
+  }
+}
+
+function loadConfigData(data) {
+ //Create Hotkey for Esc to close application
+ menu.append(new MenuItem({
+  label: 'Quit',
+  accelerator: config.Hotkeys.Quit,
+  click: () => { 
+    win.close()
+    app.quit()
+  }
+}))
+
+//Create Hotkey for Ctrl/Cmd+S to save entry
+menu.append(new MenuItem({
+    label: 'Save',
+    accelerator: config.Hotkeys.Save,
+    click: () => { 
+        win.webContents.send('saveFile');
+    }
+  }))
+
+  menu.append(new MenuItem({
+    label: 'Previous Year',
+    accelerator: config.Hotkeys.PreviousYear,
+    click: () => { 
+        win.webContents.send('prevYear');
+    }
+  }))
+
+
+  menu.append(new MenuItem({
+    label: 'Next Year',
+    accelerator: config.Hotkeys.NextYear,
+    click: () => { 
+        win.webContents.send('nextYear');
+    }
+  }))
+
+
+  menu.append(new MenuItem({
+    label: 'Select Left Entry',
+    accelerator: config.Hotkeys.SelectLeftEntry,
+    click: () => { 
+        win.webContents.send('leftSelection');
+    }
+  }))
+
+  
+  menu.append(new MenuItem({
+    label: 'Select Right Entry',
+    accelerator: config.Hotkeys.SelectRightEntry,
+    click: () => { 
+        win.webContents.send('rightSelection');
+    }
+  }))
+
+  menu.append(new MenuItem({
+    label: 'Select Up Entry',
+    accelerator: config.Hotkeys.SelectAboveEntry,
+    click: () => { 
+        win.webContents.send('upSelection');
+    }
+  }))
+
+  menu.append(new MenuItem({
+    label: 'Select Down Entry',
+    accelerator: config.Hotkeys.SelectBelowEntry,
+    click: () => { 
+        win.webContents.send('downSelection');
+    }
+  }))
+
+  menu.append(new MenuItem({
+    label: 'Next Theme',
+    accelerator: config.Hotkeys.NextTheme,
+    click: () => { 
+        win.webContents.send('setTheme', 1);
+    }
+  }))
+
+  menu.append(new MenuItem({
+    label: 'Previous Theme',
+    accelerator: config.Hotkeys.PreviousTheme,
+    click: () => { 
+        win.webContents.send('setTheme', -1);
+    }
+  }))
+
+  win.webContents.send('updateConfig', config);
+  win.webContents.send('updateDocPath', app.getPath('documents'));
+
+  //Setup menu(hotkeys)
+  win.setMenu(menu);
+}
+
 
 
 // This method will be called when Electron has finished

@@ -1,0 +1,52 @@
+{
+    "Hotkeys": {
+        "NextTheme": "Alt+=",
+        "NextYear": "Alt+PageUp",
+        "PreviousTheme": "Alt+-",
+        "PreviousYear": "Alt+PageDown",
+        "Quit": "Esc",
+        "Save": "CmdOrCtrl+S",
+        "SelectAboveEntry": "Alt+Up",
+        "SelectBelowEntry": "Alt+Down",
+        "SelectLeftEntry": "Alt+Left",
+        "SelectRightEntry": "Alt+Right"
+    },
+    "Settings": {
+        "CurrentTheme": 0,
+        "IsPastReadOnly": true
+    },
+    "themes": [
+        {
+            "base": {
+                "background-color": "#836c89",
+                "color": "#e0d5e2",
+                "font-family": "'Raleway', sans-serif;"
+            },
+            "emptyDate": {
+                "background-color": "#a99aad"
+            },
+            "selectedEntry": {
+                "background-color": "#dbace2"
+            },
+            "unselectedEntry": {
+                "background-color": "#93bbd6"
+            }
+        },
+        {
+            "base": {
+                "background-color": "#ffffff",
+                "color": "#000000",
+                "font-family": "'Raleway', sans-serif;"
+            },
+            "emptyDate": {
+                "background-color": "#222222"
+            },
+            "selectedEntry": {
+                "background-color": "#888888"
+            },
+            "unselectedEntry": {
+                "background-color": "#444444"
+            }
+        }
+    ]
+}

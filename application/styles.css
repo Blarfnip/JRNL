@@ -17,8 +17,8 @@ body {
 .note-editable {
     width: 100%;
     height: 100%;
-    color: #e0d5e2 !important; 
-    background-color: #836c89 !important;
+    color: #e0d5e2 ; 
+    background-color: #836c89 ;
     font-family: 'Raleway', sans-serif;
 }
 
