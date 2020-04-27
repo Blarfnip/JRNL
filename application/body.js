@@ -54,6 +54,11 @@ ipcRenderer.on('downSelection',(event, arg) => {
     loadNeighboringDate(0, 1);
 });
 
+ipcRenderer.on('updateConfigWindowSize',(event, arg) => {
+    console.log(arg);
+    config.Settings.WindowBounds = arg;
+});
+
 ipcRenderer.on('setTheme',(event, arg) => {
     config.Settings.CurrentTheme += arg;
     config.Settings.CurrentTheme = config.Settings.CurrentTheme >= config.themes.length ? config.Settings.CurrentTheme - config.themes.length : config.Settings.CurrentTheme < 0 ? config.Settings.CurrentTheme + config.themes.length : config.Settings.CurrentTheme;
@@ -65,7 +70,7 @@ ipcRenderer.on('updateConfig',(event, arg) => {
     console.log(arg);
     config = arg;
 
-    isPastReadonly = config.Settings.isPastReadOnly;
+    isPastReadonly = config.Settings.IsPastReadOnly;
 });
 
 function updateTheme() {
@@ -90,7 +95,7 @@ function createPage() {
 
     var date = new Date();
     setYear(date.getFullYear());
-
+    // populateYear();
     onOpen();
 }
 
@@ -295,7 +300,7 @@ window.addEventListener('unload', function(event) {
 })
 
 function saveConfig() {
-    fs.writeFileSync("config.json", JSON.stringify(config));
+    fs.writeFileSync("config.json", JSON.stringify(config, null, "\t"));
 }
 
 function saveFile(name) {
@@ -326,28 +331,60 @@ function saveFile(name) {
 
 }
 
+function populateYear() {
+    for(var m = 0; m < dates.length; m++) {
+        for(var d = 0; d < dates[m].length; d++) {
+            var month = (m < 10 ? '0' : '') + (m);
+            var date = (d < 10 ? '0' : '') + (d);
+            var year = currentCalendarYear + "";
+            var dateString = month + "" + date + "" + year; 
+            var filename = documentsPath + "\\" + dateString + fileExtension;
+            if(!fs.existsSync(dateString)) {
+                if(Math.random() > 0.9) {
+                    fs.writeFileSync(filename, "TEST");
+               }
+            }
+        }
+    }
+}
+
 function openFile(name) {
     
     var filepath = documentsPath + "\\" +  name + fileExtension;
     console.log("Opening file " + filepath);
 
-    fs.readFile(filepath, 'utf-8', (err, data) => {
-        if(err){
-            alert("An error ocurred reading the file :" + err.message);
-            return;
-        }
+    if(fs.existsSync(filepath)) {
+        fs.readFile(filepath, 'utf-8', (err, data) => {
+            if(err){
+                alert("An error ocurred reading the file :" + err.message);
+                return;
+            }
+    
+            // Change how to handle the file content
+            updateDateDisplay(name);
+    
+            $("#summernote").summernote('code', data);
+    
+            if(isPastReadonly && name != getTodaysDateString()) {
+                $("#summernote").summernote('disable');
+            } else {
+                $("#summernote").summernote('enable');
+            }
+        });    
+    } else {
+            var data = "";
+            // Change how to handle the file content
+            updateDateDisplay(name);
+    
+            $("#summernote").summernote('code', data);
+    
+            if(isPastReadonly && name != getTodaysDateString()) {
+                $("#summernote").summernote('disable');
+            } else {
+                $("#summernote").summernote('enable');
+            }
+    }
 
-        // Change how to handle the file content
-        updateDateDisplay(name);
-
-        $("#summernote").summernote('code', data);
-
-        if(isPastReadonly && name != getTodaysDateString()) {
-            $("#summernote").summernote('disable');
-        } else {
-            $("#summernote").summernote('enable');
-        }
-    });
 }
 
 //Converts the datestring to a human readable date "MONTH/DATE" 

@@ -7,62 +7,116 @@ let win
 
 const menu = new Menu()
 var config = {
-  "Hotkeys": {
-      "NextTheme": "Alt+=",
-      "NextYear": "Alt+PageUp",
-      "PreviousTheme": "Alt+-",
-      "PreviousYear": "Alt+PageDown",
-      "Quit": "Esc",
-      "Save": "CmdOrCtrl+S",
-      "SelectAboveEntry": "Alt+Up",
-      "SelectBelowEntry": "Alt+Down",
-      "SelectLeftEntry": "Alt+Left",
-      "SelectRightEntry": "Alt+Right"
-  },
-  "Settings": {
-      "CurrentTheme": 0,
-      "IsPastReadOnly": true
-  },
-  "themes": [
-      {
-          "base": {
-              "background-color": "#836c89",
-              "color": "#e0d5e2",
-              "font-family": "'Raleway', sans-serif;"
-          },
-          "emptyDate": {
-              "background-color": "#a99aad"
-          },
-          "selectedEntry": {
-              "background-color": "#dbace2"
-          },
-          "unselectedEntry": {
-              "background-color": "#93bbd6"
-          }
-      },
-      {
-          "base": {
-              "background-color": "#ffffff",
-              "color": "#000000",
-              "font-family": "'Raleway', sans-serif;"
-          },
-          "emptyDate": {
-              "background-color": "#222222"
-          },
-          "selectedEntry": {
-              "background-color": "#888888"
-          },
-          "unselectedEntry": {
-              "background-color": "#444444"
-          }
-      }
-  ]
+	"Hotkeys": {
+		"NextTheme": "Alt+=",
+		"NextYear": "Alt+PageDown",
+		"PreviousTheme": "Alt+-",
+		"PreviousYear": "Alt+PageUp",
+		"Quit": "Esc",
+		"Save": "CmdOrCtrl+S",
+		"SelectAboveEntry": "Alt+Up",
+		"SelectBelowEntry": "Alt+Down",
+		"SelectLeftEntry": "Alt+Left",
+		"SelectRightEntry": "Alt+Right"
+	},
+	"Settings": {
+		"CurrentTheme": 1,
+    "IsPastReadOnly": true,
+    "WindowBounds": {
+      "x": 50,
+      "y": 50,
+      "width": 950,
+      "height": 600
+    },
+	},
+	"themes": [
+		{
+			"base": {
+				"background-color": "#836c89",
+				"color": "#e0d5e2",
+				"font-family": "'Raleway', sans-serif;"
+			},
+			"emptyDate": {
+				"background-color": "#a99aad"
+			},
+			"selectedEntry": {
+				"background-color": "#dbace2"
+			},
+			"unselectedEntry": {
+				"background-color": "#93bbd6"
+			}
+		},
+		{
+			"base": {
+				"background-color": "#ffffff",
+				"color": "#000000",
+				"font-family": "'Raleway', sans-serif;"
+			},
+			"emptyDate": {
+				"background-color": "#222222"
+			},
+			"selectedEntry": {
+				"background-color": "#aaaaaa"
+			},
+			"unselectedEntry": {
+				"background-color": "#666666"
+			}
+		},
+		{
+			"base": {
+				"background-color": "#000000",
+				"color": "#ffffff",
+				"font-family": "'Raleway', sans-serif;"
+			},
+			"emptyDate": {
+				"background-color": "#dddddd"
+			},
+			"selectedEntry": {
+				"background-color": "#444444"
+			},
+			"unselectedEntry": {
+				"background-color": "#888888"
+			}
+		},
+		{
+			"base": {
+				"background-color": "#fcebe6",
+				"color": "#7d7572",
+				"font-family": "'Raleway', sans-serif;"
+			},
+			"emptyDate": {
+				"background-color": "#c9bcb7"
+			},
+			"selectedEntry": {
+				"background-color": "#805648"
+			},
+			"unselectedEntry": {
+				"background-color": "#fdb39a"
+			}
+		},
+		{
+			"base": {
+				"background-color": "#214c80",
+				"color": "#e6f0fc",
+				"font-family": "'Raleway', sans-serif;"
+			},
+			"emptyDate": {
+				"background-color": "#72777d"
+			},
+			"selectedEntry": {
+				"background-color": "#9ac7fd"
+			},
+			"unselectedEntry": {
+				"background-color": "#b7bfc9"
+			}
+		}
+	]
 };
 
 
 function createWindow () {
   // Create the browser window.
-  win = new BrowserWindow({ width: 950, height: 600, frame: false, backgroundColor: "#836c89" })
+  win = new BrowserWindow({ width: 0, height: 0, frame: false, backgroundColor: "#ffffff" })
 
   // and load the index.html of the app.
   win.loadURL(`file://${__dirname}/index.html`)
@@ -75,8 +129,13 @@ function createWindow () {
   //When page loads give it the correct path to save entries
   win.webContents.on('did-finish-load', () => {
     loadConfig();
+  });
 
-
+  win.on('resize', () => {
+    win.webContents.send('updateConfigWindowSize', win.getBounds());
+  });  
+  win.on('move', () => {
+    win.webContents.send('updateConfigWindowSize', win.getBounds());
   });
 
 
@@ -102,7 +161,7 @@ function loadConfig() {
       loadConfigData(config);
     });
   } else {
-    var data = JSON.stringify(config);
+    var data = JSON.stringify(config, null, "\t");
     fs.writeFile("config.json", data, (err) => {
       loadConfigData(config);
     });
@@ -201,6 +260,8 @@ menu.append(new MenuItem({
 
   //Setup menu(hotkeys)
   win.setMenu(menu);
+
+  win.setBounds(config.Settings.WindowBounds);
 }
 
 
@@ -226,3 +287,5 @@ app.on('activate', () => {
     createWindow()
   }
 })
+
+
