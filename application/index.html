@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>jrnl</title>
+    <title>JRNL</title>
 
     <!-- Insert this line above script imports  -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
@@ -27,7 +27,10 @@
     
   </head>
   <body class="base">
-        <div class="titlebar"></div>
+        <div class="titlebar">
+          <div id="exit" class="titlebarButton icon-x"></div>  
+          <div id="minimize" class="titlebarButton icon--"></div>  
+        </div>
         <div id="date" class="dateDisplay base noselect"></div>
         <div id="entry" class="entry">
             <div class="base" id="summernote"></div>
@@ -36,12 +39,12 @@
         <div id="calendar" class="calendar"></div>
         <div class="yearSelection">
           <div class="yearButtonHolder">
-            <div id="yearSelectPrevious" class="yearButton noselect"><</div>
+            <div id="yearSelectPrevious" class="yearButton yearButtonLeft noselect"><</div>
             <div id="yearDisplay" class="yearDisplay noselect">2020</div>
-            <div id="yearSelectNext" class="yearButton noselect">></div>
+            <div id="yearSelectNext" class="yearButton yearButtonRight noselect">></div>
           </div>
         </div>
-        <div class="loadScreen"></div>
+        <div class="loadScreen base"></div>
         
   </body>
 </html>

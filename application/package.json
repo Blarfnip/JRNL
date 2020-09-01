@@ -5,16 +5,28 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "package-win32": "electron-packager . --overwrite --platform=win32 --arch=ia32 --icon=./icon.ico --prune=true --out=../releases",
-    "package-osx": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=./icon.icns --prune=true --out=../releases"
+    "dist": "electron-builder",
+    "package-win32": "electron-packager . JRNL --overwrite --platform=win32 --arch=ia32 --icon=./icon.ico --prune=true --out=../releases",
+    "package-osx": "electron-packager . JRNL --overwrite --platform=darwin --arch=x64 --icon=./icon.icns --prune=true --out=../releases"
   },
-  "author": "",
+  "author": "Saul Amster",
   "license": "ISC",
   "devDependencies": {
+    "electron-builder": "^22.8.0",
     "electron": "^4.2.12",
     "electron-packager": "^13.1.1"
   },
   "dependencies": {
     "jquery": "^3.5.0"
+  },
+  "build": {
+    "appId": "com.electron.jrnl",
+    "productName": "JRNL",
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": "nsis"
+    }
   }
 }

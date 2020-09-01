@@ -1,5 +1,7 @@
 {
 	"Hotkeys": {
+		"ExportCurrentYear": "Alt+CmdOrCtrl+Y",
+		"JumpToToday": "Home",
 		"NextTheme": "Alt+=",
 		"NextYear": "Alt+PageDown",
 		"PreviousTheme": "Alt+-",
@@ -12,21 +14,26 @@
 		"SelectRightEntry": "Alt+Right"
 	},
 	"Settings": {
-		"CurrentTheme": 1,
+		"CloseToTray": true,
+		"CurrentTheme": 3,
+		"DailyNotifications": {
+			"Enabled": true,
+			"NotificationMessage": "Don't forget to add to your JRNL today!",
+			"Time": "1:42pm"
+		},
 		"IsPastReadOnly": true,
 		"WindowBounds": {
-			"height": 760,
-			"width": 607,
-			"x": 1209,
-			"y": 150
+			"height": 554,
+			"width": 838,
+			"x": 315,
+			"y": 257
 		}
 	},
-	"themes": [
+	"Themes": [
 		{
 			"base": {
 				"background-color": "#836c89",
-				"color": "#e0d5e2",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#e0d5e2"
 			},
 			"emptyDate": {
 				"background-color": "#a99aad"

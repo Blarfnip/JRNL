@@ -1,5 +1,11 @@
+/*
+  Developed by Saul Amster
+  @Blarfnip
+*/
+
 var fs = require('fs');
-var ipcRenderer = require('electron').ipcRenderer;
+// var ipcRenderer = require('electron').ipcRenderer;
+const { remote, ipcRenderer, shell } = require('electron');
 
 var dates = [];
 var currentCalendarYear;
@@ -13,8 +19,10 @@ var isPastReadonly = true;
 
 //Saves files to Documents/jrnl Entries
 ipcRenderer.on('updateDocPath',(event, arg) => {
+    updateTheme();
+
     console.log(arg);
-    documentsPath = arg + "\\jrnl Entries";
+    documentsPath = arg + "\\JRNL Entries";
     if(!fs.existsSync(documentsPath)) {
         fs.mkdirSync(documentsPath);
     }
@@ -54,14 +62,33 @@ ipcRenderer.on('downSelection',(event, arg) => {
     loadNeighboringDate(0, 1);
 });
 
+ipcRenderer.on('exportCurrentYear',(event, arg) => {
+    exportYear(currentCalendarYear);
+});
+
+ipcRenderer.on('jumpToToday',(event, arg) => {
+    console.log("JUMPING TO TODAY");
+    var fileName = getTodaysDateString();
+
+    //If there exists an entry for today, open it. Else create a new entry.
+    if(fs.existsSync(documentsPath + "\\" + fileName + fileExtension)) {
+        openFile(fileName);
+    } else {
+        saveFile(fileName);
+        updateDateDisplay(fileName);
+    }
+    currentDateString = fileName;
+    updateCalendar();
+});
+
 ipcRenderer.on('updateConfigWindowSize',(event, arg) => {
-    console.log(arg);
+    // console.log(arg);
     config.Settings.WindowBounds = arg;
 });
 
 ipcRenderer.on('setTheme',(event, arg) => {
     config.Settings.CurrentTheme += arg;
-    config.Settings.CurrentTheme = config.Settings.CurrentTheme >= config.themes.length ? config.Settings.CurrentTheme - config.themes.length : config.Settings.CurrentTheme < 0 ? config.Settings.CurrentTheme + config.themes.length : config.Settings.CurrentTheme;
+    config.Settings.CurrentTheme = config.Settings.CurrentTheme >= config.Themes.length ? config.Settings.CurrentTheme - config.Themes.length : config.Settings.CurrentTheme < 0 ? config.Settings.CurrentTheme + config.Themes.length : config.Settings.CurrentTheme;
     console.log("Setting theme: " + config.Settings.CurrentTheme);
     updateTheme();
 });
@@ -71,12 +98,18 @@ ipcRenderer.on('updateConfig',(event, arg) => {
     config = arg;
 
     isPastReadonly = config.Settings.IsPastReadOnly;
+
+    if(config.Settings.DailyNotifications.Enabled) {
+        setInterval(sendNotification, 60 * 1000);
+    }
 });
 
 function updateTheme() {
-    $('.base').css(config.themes[config.Settings.CurrentTheme].base);
-    $('.note-editable').css(config.themes[config.Settings.CurrentTheme].base);
-    $('.day').css(config.themes[config.Settings.CurrentTheme].emptyDate);
+    $('.base').css(config.Themes[config.Settings.CurrentTheme].base);
+    $('.note-editable').css(config.Themes[config.Settings.CurrentTheme].base);
+    $('.day').css(config.Themes[config.Settings.CurrentTheme].emptyDate);
+    $('.titlebarButton').css(config.Themes[config.Settings.CurrentTheme].selectedEntry);
+    $('.yearButton').css(config.Themes[config.Settings.CurrentTheme].selectedEntry);
     updateCalendar();
 }
 
@@ -84,19 +117,66 @@ function createPage() {
     //Create summernote instance that autofocuses and uses the minimal ui
     $('#summernote').summernote({
         airMode: true,
-        focus: true
+        focus: true,  // toolbar
+        popover: {
+            air: [
+                ['style', ['style']],
+                ['font', ['bold', 'italic', 'underline', 'clear']],
+                // ['font', ['bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'clear']],
+                ['fontsize', ['fontsize']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['height', ['height']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture', 'hr']],
+            ],
+        }
     });
-    $('.base').css(config.themes[config.Settings.CurrentTheme].base);
-    $('.note-editable').css(config.themes[config.Settings.CurrentTheme].base);
+    $('.base').css(config.Themes[config.Settings.CurrentTheme].base);
+    $('.note-editable').css(config.Themes[config.Settings.CurrentTheme].base);
 
 
     $('#yearSelectPrevious').on('click', function() {setYear(currentCalendarYear - 1)});
     $('#yearSelectNext').on('click', function() {setYear(currentCalendarYear + 1)});
 
+
+    $('#minimize').on('click', function() { 
+        console.log("MINIMIZE");
+        remote.BrowserWindow.getFocusedWindow().minimize();
+    });
+    $('#exit').on('click', function() {
+        console.log("EXIT");
+        const win = remote.BrowserWindow.getFocusedWindow();
+        win.close();
+        win.quit();
+    });
+
     var date = new Date();
     setYear(date.getFullYear());
     // populateYear();
     onOpen();
+}
+
+function sendNotification() {
+    let d = new Date();
+    let goalTime = config.Settings.DailyNotifications.Time.split(":");
+    let goalHours = parseInt(goalTime[0]);// + (parseInt(goalTime[0]) == 12 && goalTime[1].substring(2,4) === "am") ? -12 : (goalTime[1].substring(2,4) === "pm" && parseInt(goalTime[0]) < 12 ? 12 : 0);
+    goalHours = goalHours != 12 && goalTime[1].substring(2,4) === "pm" ? goalHours + 12 : goalHours;
+    goalHours = goalHours == 12 && goalTime[1].substring(2,4) === "am" ? goalHours - 12 : goalHours;
+
+    if(d.getHours() == goalHours && d.getMinutes() == goalTime[1].substring(0,2)) {
+        console.log("SENDING NOTIFICATION")
+
+        let myNotification = new Notification('JRNL', {
+            body: config.Settings.DailyNotifications.NotificationMessage
+        })
+    
+        myNotification.onclick = () => {
+            remote.BrowserWindow.getAllWindows()[0].show();
+        }
+
+    }
+
 }
 
 function buildCalendar() {
@@ -138,6 +218,7 @@ function createCalendar(dates, year) {
     var htmlText = "";
     for(var m = 1; m <= dates.length; m++) {
         htmlText += "<div class = 'monthCol'>";
+        htmlText += "<div class='monthLetter noselect'>"+ months[m-1].substring(0,1) +"</div>";
         for(var d = 1; d <= dates[m - 1].length; d++) {
             var month = (m < 10 ? '0' : '') + m;
             var date = (d < 10 ? '0' : '') + d;
@@ -147,7 +228,7 @@ function createCalendar(dates, year) {
     }
     htmlText += ""
     $("#calendar").html(htmlText);
-    $('.day').css(config.themes[config.Settings.CurrentTheme].emptyDate);
+    $('.day').css(config.Themes[config.Settings.CurrentTheme].emptyDate);
 
     //Binds a click listener so each button opens its entry
     document.getElementById("calendar").addEventListener("click",function(e) {
@@ -220,7 +301,7 @@ function loadNeighboringDate(x, y) {
 //loads entry
 function loadOtherDate(m, d, y) {
  
-    if(dates[m-1][d-1]) {
+    if(!isPastReadonly || dates[m-1][d-1]) {
         var month = (m < 10 ? '0' : '') + m;
         var date = (d < 10 ? '0' : '') + d;
         var year = y;
@@ -257,8 +338,7 @@ function onOpen() {
     }
     currentDateString = fileName;
     updateCalendar();
-    updateTheme();
-    $('.loadScreen').fadeOut(500);
+    setTimeout(() => {$('.loadScreen').fadeOut(500);}, 500);
 }
 
 //updates calendar with colors depending on if entry exists
@@ -272,13 +352,14 @@ function updateCalendar() {
             var datePath = documentsPath + "\\" + dateString + fileExtension;
 
             if(fs.existsSync(datePath) || dateString == getTodaysDateString()) {
-                $("#" + dateString).css(config.themes[config.Settings.CurrentTheme].unselectedEntry);
+                $("#" + dateString).css(config.Themes[config.Settings.CurrentTheme].unselectedEntry);
                 dates[m-1][d-1] = true;
+            } else {
+                $("#" + dateString).css(config.Themes[config.Settings.CurrentTheme].emptyDate);
+            }
 
-                if(currentDateString == dateString) {
-                    $("#" + dateString).css(config.themes[config.Settings.CurrentTheme].selectedEntry);
-                }
-
+            if(currentDateString == dateString) {
+                $("#" + dateString).css(config.Themes[config.Settings.CurrentTheme].selectedEntry);
             }
         }
     }
@@ -295,6 +376,10 @@ function createArray(size) {
 
 //Save on close
 window.addEventListener('unload', function(event) {
+    
+})
+
+remote.getCurrentWindow().on('close', (e) => {
     saveConfig();
     saveFile(currentDateString);
 })
@@ -388,12 +473,87 @@ function openFile(name) {
 }
 
 //Converts the datestring to a human readable date "MONTH/DATE" 
+const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+]
 function updateDateDisplay(dateString) {
     var month = parseInt(dateString.substring(0, 2));
     var date = parseInt(dateString.substring(2, 4));
     var year = parseInt(dateString.substring(4, 8));
-    month = (month < 10 ? '0' : '') + month;
+    //month = (month < 10 ? '0' : '') + month;
     date = (date < 10 ? '0' : '') + date;
-    var adjustedName = month + "/" + date + "/" + year;
+    var adjustedName = months[month - 1] + " " + date + ", " + year;
     $("#date").html(adjustedName);
+}
+
+function exportYear(year) {
+    let exportPath = documentsPath + "\\" + year + ".html";
+    let exportedMarkdown = "<h1><b>JRNL " + year + "</b></h1> <p><hr><p>";
+
+    for(var m = 0; m < dates.length; m++) {
+        for(var d = 0; d < dates[m].length; d++) {
+            var month = (m < 10 ? '0' : '') + (m);
+            var date = (d < 10 ? '0' : '') + (d);
+            var dateString = month + "" + date + "" + year; 
+            var adjustedName = months[month - 1] + " " + date + ", " + year;
+            var filename = documentsPath + "\\" + dateString + fileExtension;
+            if(fs.existsSync(filename)) {
+                exportedMarkdown += "<hr><h1>" + adjustedName + "</h1><p>";
+                exportedMarkdown += fs.readFileSync(filename, 'utf-8').replace('`', "'") + "<p>";
+            }
+        }
+    }
+
+    let exportedFile = `
+        <head>
+            <script src="  https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+            <style>
+                body {
+                    ` + JSON.stringify(config.Themes[config.Settings.CurrentTheme].base).replace(/\{/g, '').replace(/\}/g, '').replace(/\",/g, ';\n').replace(/\"/g, '') + `
+                }
+                .contents {
+                    padding: 2%;
+                }
+            </style>
+        </head>
+        <body>
+            <div id="contents" class="contents"></div>
+            <script>
+                var converter = new showdown.Converter(),
+                    text      = \`` + exportedMarkdown + `\`,
+                    html      = converter.makeHtml(text);
+
+                document.getElementById("contents").innerHTML = html;
+            </script>
+        </body>
+    `;
+
+    fs.writeFile(exportPath, exportedFile, function (err) {
+        if(err){
+            alert("An error ocurred creating the file "+ err.message)
+        }
+
+        let myNotification = new Notification('JRNL', {
+            body: year + " Year exported to " + exportPath
+        })
+    
+        myNotification.onclick = () => {
+            shell.showItemInFolder(exportPath);
+        }
+
+        shell.showItemInFolder(exportPath);
+        
+        console.log("The file has been succesfully saved at " + exportPath);
+    });
 }

@@ -1,6 +1,5 @@
 body {
     color: #e0d5e2;
-    background-color: #836c89;
     font-family: 'Raleway', sans-serif;
 }
 
@@ -24,16 +23,47 @@ body {
 
 .titlebar {
     position: absolute;
+    z-index: 100;
+    height: 28px;
     width: 100%;
     top: 0%;
-    bottom:  97%;
+    padding-right: 7px;
     -webkit-user-select: none;
     -webkit-app-region: drag;
 }
+
+.titlebarButton {
+    float: right;
+    padding: 5px;
+    margin: 5px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.4;
+    mask-size: cover;
+    -webkit-mask-size: cover;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-app-region: no-drag;
+}
+
+.titlebarButton:hover {
+    opacity: 1;
+}
+
+.icon-x {
+    mask: url(x.svg);
+    -webkit-mask: url(x.svg);
+}
+
+.icon-- {
+    mask: url(-.svg);
+    -webkit-mask: url(-.svg);
+}
+
 .dateDisplay {
     position: absolute;
-    top: 1%;
-    left: 2%;
+    top: 20px;
+    left: 25px;
 }
 
 ::-webkit-scrollbar {
@@ -41,21 +71,21 @@ body {
 }
 .entry {
     position: absolute;
-    top: 3%;
+    top: 30px;
     bottom: 3%;
     padding-top: 24px;
-    left: 4%;
-    right: 30%;
+    left: 40px;
+    right: 200px;
     overflow-y: auto;
 }
 
 .calendar {
     position: absolute;
-    top: 3%;
+    top: 30px;
     padding-top: 24px;
     bottom: 3%;
     width: 150px;
-    right: 3%;
+    right: 15px;
     display: table;
 }
 
@@ -75,12 +105,17 @@ body {
     border-radius: 2px;
 }
 
+.monthLetter {
+    text-align: center;
+    font-size: 12px;
+    margin-bottom: -2px;
+}
+
 .yearSelection {
     position: absolute;
-    top: 3%;
-    
+    top: 30px;
     width: 150px;
-    right: 3%;
+    right: 15px;
 }
 
 .loadScreen {
@@ -89,7 +124,6 @@ body {
     left: 0%;
     right: 0%;
     bottom: 0%;
-    background-color: #ffffff ;
 }
 
 .yearButtonHolder {
@@ -99,10 +133,25 @@ body {
 }
 
 .yearButton {
-    margin: 2px;
+    margin: 5px;
     text-align: center;
-    width: 30px;
+    background-color: black;
+    height: 15px;
+    width: 15px;
+    mask-size: cover;
+    -webkit-mask-size: cover;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+}
 
+.yearButtonLeft {
+    mask: url(leftArrrow.svg);
+    -webkit-mask: url(leftArrrow.svg);
+}
+
+.yearButtonRight {
+    mask: url(rightArrow.svg);
+    -webkit-mask: url(rightArrow.svg);
 }
 
 .yearDisplay {

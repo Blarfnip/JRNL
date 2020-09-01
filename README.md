@@ -7,15 +7,15 @@ in a week with the goal of having a very simple way of consolidating my daily th
   
 ![Early Gif](/Ver1.gif)  
 
-All jrnl entries are saved in `/Documents/jrnl Entries` as `.jrnl` files. These files are markdown files that can be opened and read
+All JRNL entries are saved in `/Documents/JRNL Entries` as `.jrnl` files. These files are markdown files that can be opened and read
 in any other markdown editor.  
   
-jrnl tries its hardest to save your entries as much as it can. It will save automatically when you switch to viewing another entry 
+JRNL tries its hardest to save your entries as much as it can. It will save automatically when you switch to viewing another entry 
 and when you quit (by pressing `Esc`). But if that isn't enough for you, `Ctrl/Cmd+S` will manually save the entry as well.  
   
-Upon opening jrnl it will automatically open up the day's entry. If an entry does not exist it will make one.  
+Upon opening JRNL it will automatically open up the day's entry. If an entry does not exist it will make one.  
   
-#### Renaming `.jrnl` files will cause jrnl to lose track of them
+#### Renaming `.jrnl` files will cause JRNL to lose track of them
 
 ## Installing
 ### For Personal Use  

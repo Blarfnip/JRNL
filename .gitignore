@@ -2,6 +2,7 @@
 # Created by https://www.gitignore.io/api/node
 # Edit at https://www.gitignore.io/?templates=node
 
+
 ### Node ###
 # Logs
 logs
@@ -40,6 +41,7 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+dist
 releases
 
 # Dependency directories

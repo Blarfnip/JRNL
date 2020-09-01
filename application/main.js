@@ -1,9 +1,16 @@
-const { app, BrowserWindow ,Menu, MenuItem} = require('electron')
+/*
+  Developed by Saul Amster
+  @Blarfnip
+*/
+
+const { app, BrowserWindow ,Menu, MenuItem, Tray} = require('electron')
 var fs = require('fs');
+const path = require('path');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let win
+let win = null;
+let tray = null;
 
 const menu = new Menu()
 var config = {
@@ -14,14 +21,22 @@ var config = {
 		"PreviousYear": "Alt+PageUp",
 		"Quit": "Esc",
 		"Save": "CmdOrCtrl+S",
+		"ExportCurrentYear": "Alt+CmdOrCtrl+Y",
 		"SelectAboveEntry": "Alt+Up",
 		"SelectBelowEntry": "Alt+Down",
 		"SelectLeftEntry": "Alt+Left",
-		"SelectRightEntry": "Alt+Right"
+    "SelectRightEntry": "Alt+Right",
+    "JumpToToday": "Home"
 	},
 	"Settings": {
-		"CurrentTheme": 1,
+    "CurrentTheme": 3,
     "IsPastReadOnly": true,
+    "CloseToTray": true,
+    "DailyNotifications": {
+      "Enabled": true,
+      "Time": "07:30pm",
+      "NotificationMessage": "Don't forget to add to your JRNL today!"
+    },
     "WindowBounds": {
       "x": 50,
       "y": 50,
@@ -29,12 +44,11 @@ var config = {
       "height": 600
     },
 	},
-	"themes": [
+	"Themes": [
 		{
 			"base": {
 				"background-color": "#836c89",
-				"color": "#e0d5e2",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#e0d5e2"
 			},
 			"emptyDate": {
 				"background-color": "#a99aad"
@@ -49,8 +63,7 @@ var config = {
 		{
 			"base": {
 				"background-color": "#ffffff",
-				"color": "#000000",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#000000"
 			},
 			"emptyDate": {
 				"background-color": "#222222"
@@ -65,8 +78,7 @@ var config = {
 		{
 			"base": {
 				"background-color": "#000000",
-				"color": "#ffffff",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#ffffff"
 			},
 			"emptyDate": {
 				"background-color": "#dddddd"
@@ -81,8 +93,7 @@ var config = {
 		{
 			"base": {
 				"background-color": "#fcebe6",
-				"color": "#7d7572",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#7d7572"
 			},
 			"emptyDate": {
 				"background-color": "#c9bcb7"
@@ -97,8 +108,7 @@ var config = {
 		{
 			"base": {
 				"background-color": "#214c80",
-				"color": "#e6f0fc",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#e6f0fc"
 			},
 			"emptyDate": {
 				"background-color": "#72777d"
@@ -115,37 +125,7 @@ var config = {
 
 
 function createWindow () {
-  // Create the browser window.
-  win = new BrowserWindow({ width: 0, height: 0, frame: false, backgroundColor: "#ffffff" })
-
-  // and load the index.html of the app.
-  win.loadURL(`file://${__dirname}/index.html`)
-
-  // Open the DevTools.
-  //Uncomment this to debug
-  // win.webContents.openDevTools()
-
-
-  //When page loads give it the correct path to save entries
-  win.webContents.on('did-finish-load', () => {
-    loadConfig();
-  });
-
-  win.on('resize', () => {
-    win.webContents.send('updateConfigWindowSize', win.getBounds());
-  });  
-  win.on('move', () => {
-    win.webContents.send('updateConfigWindowSize', win.getBounds());
-  });
-
-
-  // Emitted when the window is closed.
-  win.on('closed', () => {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    win = null
-  })
+  loadConfig();
 }
 
 function loadConfig() {
@@ -157,6 +137,7 @@ function loadConfig() {
       if(err){
           return;
       }
+      
       config = JSON.parse(data);
       loadConfigData(config);
     });
@@ -169,22 +150,30 @@ function loadConfig() {
 }
 
 function loadConfigData(data) {
- //Create Hotkey for Esc to close application
- menu.append(new MenuItem({
-  label: 'Quit',
-  accelerator: config.Hotkeys.Quit,
-  click: () => { 
-    win.close()
-    app.quit()
-  }
-}))
+  //Create Hotkey for Esc to close application
+  menu.append(new MenuItem({
+    label: 'Quit',
+    accelerator: config.Hotkeys.Quit,
+    click: () => { 
+      win.close()
+      app.quit()
+    }
+  }))
 
-//Create Hotkey for Ctrl/Cmd+S to save entry
-menu.append(new MenuItem({
+  //Create Hotkey for Ctrl/Cmd+S to save entry
+  menu.append(new MenuItem({
     label: 'Save',
     accelerator: config.Hotkeys.Save,
     click: () => { 
         win.webContents.send('saveFile');
+    }
+  }))
+
+  menu.append(new MenuItem({
+    label: 'Export Current Year',
+    accelerator: config.Hotkeys.ExportCurrentYear,
+    click: () => { 
+        win.webContents.send('exportCurrentYear');
     }
   }))
 
@@ -255,13 +244,124 @@ menu.append(new MenuItem({
     }
   }))
 
-  win.webContents.send('updateConfig', config);
-  win.webContents.send('updateDocPath', app.getPath('documents'));
+  menu.append(new MenuItem({
+    label: 'Jump to Today',
+    accelerator: config.Hotkeys.JumpToToday,
+    click: () => { 
+        win.webContents.send('jumpToToday');
+    }
+  }))
+
+  const gotTheLock = app.requestSingleInstanceLock()
+
+  if (!gotTheLock) {
+    app.quit()
+  } else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+      // Someone tried to run a second instance, we should focus our window.
+      if (win) {
+        if (win.isMinimized()) win.restore()
+        win.focus()
+      }
+    })
+
+    // Create myWindow, load the rest of the app, etc...
+    // Create the browser window.
+    win = new BrowserWindow({
+      width: config.Settings.WindowBounds.width,
+      height: config.Settings.WindowBounds.width,
+      x: config.Settings.WindowBounds.x,
+      y: config.Settings.WindowBounds.y,
+      frame: false, backgroundColor:
+      config.Themes[config.Settings.CurrentTheme].base["background-color"],
+      show: false,
+      icon: path.resolve(__dirname, 'icon.ico')
+    })
+
+
+    if(config.Settings.CloseToTray) {
+      tray = new Tray(path.resolve(__dirname, 'icon.ico'))
+      const contextMenu = Menu.buildFromTemplate([
+        new MenuItem({
+          label: "Open",
+          click: () => {
+            win.show();
+          }
+        }),
+        new MenuItem({
+          label: 'Export Current Year',
+          click: () => { 
+              win.webContents.send('exportCurrentYear');
+          }
+        }),
+        new MenuItem({
+          label: "Quit",
+          click: () => {
+            win.close();
+            win.destroy();
+            app.quit();
+          }
+        })
+      ])
+      tray.setToolTip('JRNL')
+      tray.on('click', (e) => {
+        win.show();
+      })
+      tray.setContextMenu(contextMenu)
+    
+    }
+    
+
+    // and load the index.html of the app.
+    win.loadURL(`file://${__dirname}/index.html`)
+
+    // Open the DevTools.
+    //Uncomment this to debug
+    // win.webContents.openDevTools()
+
+
+    //When page loads give it the correct path to save entries
+    win.webContents.on('did-finish-load', () => {
+      win.webContents.send('updateConfig', config);
+      win.webContents.send('updateDocPath', app.getPath('documents'));
+    });
+
+    win.on('ready-to-show', () => {
+      setTimeout(() => {win.show()}, 500);
+    });
+
+    win.on('resize', () => {
+      win.webContents.send('updateConfigWindowSize', win.getBounds());
+    });  
+    win.on('move', () => {
+      win.webContents.send('updateConfigWindowSize', win.getBounds());
+    });
+
+
+    win.on('close', (event) => {
+        if(config.Settings.CloseToTray) {
+          event.preventDefault();
+          win.hide();
+        }
+    });
+
+    // Emitted when the window is closed.
+    win.on('closed', () => {
+      // Dereference the window object, usually you would store windows
+      // in an array if your app supports multi windows, this is the time
+      // when you should delete the corresponding element.
+      win = null
+  })
+
 
   //Setup menu(hotkeys)
   win.setMenu(menu);
 
   win.setBounds(config.Settings.WindowBounds);
+  }
+
+  
+  
 }
 
 
