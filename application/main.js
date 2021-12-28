@@ -317,7 +317,7 @@ function loadConfigData(data) {
 
     // Open the DevTools.
     //Uncomment this to debug
-    // win.webContents.openDevTools()
+    win.webContents.openDevTools()
 
 
     //When page loads give it the correct path to save entries
