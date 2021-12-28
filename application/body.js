@@ -15,6 +15,8 @@ var fileExtension = ".jrnl";
 var config;
 var isPastReadonly = true;
 
+var autoSaveInterval;
+
 //This file is for all code that runs locally in the webpage
 
 //Saves files to Documents/jrnl Entries
@@ -70,6 +72,10 @@ ipcRenderer.on('jumpToToday',(event, arg) => {
     console.log("JUMPING TO TODAY");
     var fileName = getTodaysDateString();
 
+    if(autoSaveInterval != null) {
+        clearInterval(autoSaveInterval);
+    }
+
     //If there exists an entry for today, open it. Else create a new entry.
     if(fs.existsSync(documentsPath + "\\" + fileName + fileExtension)) {
         openFile(fileName);
@@ -104,6 +110,8 @@ ipcRenderer.on('updateConfig',(event, arg) => {
     }
 });
 
+
+
 function updateTheme() {
     $('.base').css(config.Themes[config.Settings.CurrentTheme].base);
     $('.note-editable').css(config.Themes[config.Settings.CurrentTheme].base);
@@ -135,6 +143,7 @@ function createPage() {
     $('.base').css(config.Themes[config.Settings.CurrentTheme].base);
     $('.note-editable').css(config.Themes[config.Settings.CurrentTheme].base);
 
+    $("#save").hide();
 
     $('#yearSelectPrevious').on('click', function() {setYear(currentCalendarYear - 1)});
     $('#yearSelectNext').on('click', function() {setYear(currentCalendarYear + 1)});
@@ -149,6 +158,16 @@ function createPage() {
         const win = remote.BrowserWindow.getFocusedWindow();
         win.close();
         win.quit();
+    });
+
+    $(document).on("keydown", function (e) {
+        if(autoSaveInterval != null) {
+            clearInterval(autoSaveInterval);
+        }
+
+        $("#save").show();
+
+        autoSaveInterval = setInterval(() => saveFile(currentDateString), 10 * 1000);
     });
 
     var date = new Date();
@@ -308,6 +327,10 @@ function loadOtherDate(m, d, y) {
         if((month + "" + date + "" + year) == currentDateString) return;
 
         if(!isPastReadonly || currentDateString == getTodaysDateString()) {
+            if(autoSaveInterval != null) {
+                clearInterval(autoSaveInterval);
+            }
+
             saveFile(currentDateString);
         }
         currentDateString = month + "" + date + "" + year;
@@ -414,6 +437,7 @@ function saveFile(name) {
     
     }
 
+    $("#save").hide();
 }
 
 function populateYear() {

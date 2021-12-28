@@ -65,10 +65,25 @@ body {
     -webkit-mask: url(-.svg);
 }
 
+.icon-dot {
+    mask: url(dot.svg);
+    -webkit-mask: url(dot.svg);
+    margin: auto;
+    margin-left: 6px;
+    width: 4px;
+    height: 4px;
+    opacity: 0.4;
+}
+
 .dateDisplay {
+    display: flex;
     position: absolute;
     top: 20px;
     left: 25px;
+}
+
+.dateDisplayEntry {
+    flex-grow: 1;
 }
 
 ::-webkit-scrollbar {
