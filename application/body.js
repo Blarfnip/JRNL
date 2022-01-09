@@ -3,34 +3,35 @@
   @Blarfnip
 */
 
+
 var fs = require('fs');
 // var ipcRenderer = require('electron').ipcRenderer;
-const { remote, ipcRenderer, shell } = require('electron');
+const { ipcRenderer, webFrame } = require('electron');
+// const {dialog} = require('electron').remote;
 
 var dates = [];
 var currentCalendarYear;
-var documentsPath;
+var documentsPath = "";
 var currentDateString = "0000";
 var fileExtension = ".jrnl";
 var config;
 var isPastReadonly = true;
+var settingsOpen = false;
 
 var autoSaveInterval;
 
+
+// $('#baseColorSetting').val(config.Themes[config.Settings.CurrentTheme].base["background-color"]);
+// $('#baseTextColorSetting').val(config.Themes[config.Settings.CurrentTheme].base["color"]);
+// $('#emptyDateColorSetting').val(config.Themes[config.Settings.CurrentTheme].emptyDate["background-color"]);
+// $('#selectedEntryColorSetting').val(config.Themes[config.Settings.CurrentTheme].selectedEntry["background-color"]);
+// $('#unselectedEntryColorSetting').val(config.Themes[config.Settings.CurrentTheme].unselectedEntry["background-color"]);
+
+var baseColoris, baseTextColoris, emptyDateColoris, selectedEntryColoris, unselectedEntryColoris;
+
+
 //This file is for all code that runs locally in the webpage
 
-//Saves files to Documents/jrnl Entries
-ipcRenderer.on('updateDocPath',(event, arg) => {
-    updateTheme();
-
-    console.log(arg);
-    documentsPath = arg + "\\JRNL Entries";
-    if(!fs.existsSync(documentsPath)) {
-        fs.mkdirSync(documentsPath);
-    }
-
-    createPage();
-});
 
 //Saves file when Ctrl/Cmd+S is pressed
 ipcRenderer.on('saveFile',(event, arg) => {
@@ -72,6 +73,11 @@ ipcRenderer.on('jumpToToday',(event, arg) => {
     console.log("JUMPING TO TODAY");
     var fileName = getTodaysDateString();
 
+    if (settingsOpen) {
+        $("#settings").fadeOut();
+        settingsOpen = false;
+    }
+
     if(autoSaveInterval != null) {
         clearInterval(autoSaveInterval);
     }
@@ -80,12 +86,44 @@ ipcRenderer.on('jumpToToday',(event, arg) => {
     if(fs.existsSync(documentsPath + "\\" + fileName + fileExtension)) {
         openFile(fileName);
     } else {
-        saveFile(fileName);
+        saveFile(currentDateString);
+        openFile(fileName);
         updateDateDisplay(fileName);
     }
     currentDateString = fileName;
     updateCalendar();
 });
+
+ipcRenderer.on('refreshPage',(event, arg) => {
+    // console.log(arg);
+    let fileName = currentDateString;
+
+    // Refresh the page if the page is not today's date incase it is no longer editable
+    if(isPastReadonly && fileName != getTodaysDateString()) {
+        $("#summernote").summernote('disable');
+    } else {
+        $("#summernote").summernote('enable');
+        setTimeout(function() {
+            $('.note-editable').trigger('focus');
+        }, 100);
+    }
+});
+
+ipcRenderer.on('windowClose',(event, arg) => {
+    if(autoSaveInterval != null) {
+        clearInterval(autoSaveInterval);
+    }
+
+    saveConfig();
+    saveFile(currentDateString);
+});
+
+
+function setDateTest(date) {
+    setTimeout(() => {
+        currentDateString = date;
+    }, 15000);
+}
 
 ipcRenderer.on('updateConfigWindowSize',(event, arg) => {
     // console.log(arg);
@@ -103,6 +141,12 @@ ipcRenderer.on('updateConfig',(event, arg) => {
     console.log(arg);
     config = arg;
 
+    updateTheme();
+
+    updateDocumentsPath(config.Settings.jrnlEntryPath);
+
+    createPage();
+
     isPastReadonly = config.Settings.IsPastReadOnly;
 
     if(config.Settings.DailyNotifications.Enabled) {
@@ -110,16 +154,64 @@ ipcRenderer.on('updateConfig',(event, arg) => {
     }
 });
 
+function updateDocumentsPath(path) {
+    console.log("Updating entry path: " + path);
+    if(!fs.existsSync(path)) {
+        fs.mkdirSync(path);
+    }
+
+    // Take care of old path
+    if(documentsPath != "") {
+        fs.readdirSync(documentsPath).forEach(file => {
+            if(file.endsWith(fileExtension)) {
+                fs.copyFileSync(documentsPath + "\\" + file, path + "\\" + file);
+            }
+        });
+    }
+
+    // New Path
+    documentsPath = path;
+}
+
 
 
 function updateTheme() {
     $('.base').css(config.Themes[config.Settings.CurrentTheme].base);
     $('.note-editable').css(config.Themes[config.Settings.CurrentTheme].base);
+    $('.settings').css(config.Themes[config.Settings.CurrentTheme].base);
     $('.day').css(config.Themes[config.Settings.CurrentTheme].emptyDate);
     $('.titlebarButton').css(config.Themes[config.Settings.CurrentTheme].selectedEntry);
     $('.yearButton').css(config.Themes[config.Settings.CurrentTheme].selectedEntry);
+    
+    $('#currentTheme').val(config.Settings.CurrentTheme);
+
+    // Update settings color pickers
+    $('#baseColorSetting').val(config.Themes[config.Settings.CurrentTheme].base["background-color"]);
+    $('#baseTextColorSetting').val(config.Themes[config.Settings.CurrentTheme].base["color"]);
+    $('#emptyDateColorSetting').val(config.Themes[config.Settings.CurrentTheme].emptyDate["background-color"]);
+    $('#selectedEntryColorSetting').val(config.Themes[config.Settings.CurrentTheme].selectedEntry["background-color"]);
+    $('#unselectedEntryColorSetting').val(config.Themes[config.Settings.CurrentTheme].unselectedEntry["background-color"]);
+
+    $('#baseColorSetting').parent().css({color: config.Themes[config.Settings.CurrentTheme].base["background-color"]});
+    $('#baseTextColorSetting').parent().css({color: config.Themes[config.Settings.CurrentTheme].base["color"]});
+    $('#emptyDateColorSetting').parent().css({color: config.Themes[config.Settings.CurrentTheme].emptyDate["background-color"]});
+    $('#selectedEntryColorSetting').parent().css({color: config.Themes[config.Settings.CurrentTheme].selectedEntry["background-color"]});
+    $('#unselectedEntryColorSetting').parent().css({color: config.Themes[config.Settings.CurrentTheme].unselectedEntry["background-color"]});
+
     updateCalendar();
 }
+
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    var x = result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+      a: 1
+    } : null;
+
+    return `rgb(${x.r},${x.g},${x.b})`;
+  }
 
 function createPage() {
     //Create summernote instance that autofocuses and uses the minimal ui
@@ -144,20 +236,39 @@ function createPage() {
     $('.note-editable').css(config.Themes[config.Settings.CurrentTheme].base);
 
     $("#save").hide();
+    $('#settings').hide();
 
     $('#yearSelectPrevious').on('click', function() {setYear(currentCalendarYear - 1)});
     $('#yearSelectNext').on('click', function() {setYear(currentCalendarYear + 1)});
 
 
+    $('#settingsBackButton').on('click', function() {
+        $('#settings').fadeOut();
+        settingsOpen = false;
+    });
+
+    $('#settingsButton').on('click', function() {
+        $('#settings').fadeToggle();
+        settingsOpen = !settingsOpen;
+    });
+
+    setupSettings();
+    setupSettingHints();
+
+    webFrame.setZoomFactor(config.Settings.ApplicationScale);
+
+
     $('#minimize').on('click', function() { 
         console.log("MINIMIZE");
-        remote.BrowserWindow.getFocusedWindow().minimize();
+        // remote.BrowserWindow.getFocusedWindow().minimize();
+        ipcRenderer.sendSync("minimize-button").returnValue;
     });
     $('#exit').on('click', function() {
         console.log("EXIT");
-        const win = remote.BrowserWindow.getFocusedWindow();
-        win.close();
-        win.quit();
+        // const win = remote.BrowserWindow.getFocusedWindow();
+        // win.close();
+        // win.quit();
+        ipcRenderer.sendSync("close-button").returnValue;
     });
 
     $(document).on("keydown", function (e) {
@@ -167,7 +278,15 @@ function createPage() {
 
         $("#save").show();
 
-        autoSaveInterval = setInterval(() => saveFile(currentDateString), 10 * 1000);
+        autoSaveInterval = setTimeout(() => {
+            // let isVisible = ipcRenderer.sendSync("is-window-visible");
+            // console.log(isVisible);
+            // if (isVisible) {
+                saveFile(currentDateString);
+            // } else {
+            //     $("#save").hide();
+            // }
+        }, 10 * 1000);
     });
 
     var date = new Date();
@@ -176,26 +295,447 @@ function createPage() {
     onOpen();
 }
 
+function setupSettings() {
+
+    $('#baseColorSetting').val(config.Themes[config.Settings.CurrentTheme].base["background-color"]);
+    $('#baseTextColorSetting').val(config.Themes[config.Settings.CurrentTheme].base["color"]);
+    $('#emptyDateColorSetting').val(config.Themes[config.Settings.CurrentTheme].emptyDate["background-color"]);
+    $('#selectedEntryColorSetting').val(config.Themes[config.Settings.CurrentTheme].selectedEntry["background-color"]);
+    $('#unselectedEntryColorSetting').val(config.Themes[config.Settings.CurrentTheme].unselectedEntry["background-color"]);
+
+    $('#notificationsEnabled').prop('checked', config.Settings.DailyNotifications.Enabled);
+    $('#timepicker').val(config.Settings.DailyNotifications.Time);
+    $('#notificationMessage').val(config.Settings.DailyNotifications.NotificationMessage);
+
+    $('#isPastReadOnly').prop('checked', !config.Settings.IsPastReadOnly);
+    $('#closeToTray').prop('checked', config.Settings.CloseToTray);
+
+    $('#applicationScale').val(config.Settings.ApplicationScale);
+
+    var currentThemeSelector = $('#currentTheme');
+    $.each(config.Themes, function(val, text) {
+        currentThemeSelector.append(
+            $('<option></option>').val(val).html(text.name)
+        );
+    });
+
+    $('#currentTheme').val(config.Settings.CurrentTheme);
+
+    $('#entryPath').html(config.Settings.jrnlEntryPath);
+
+    baseColoris = Coloris({
+        el: '#baseColorSetting',
+        format: 'hex',
+        alpha: false
+    });
+
+    baseTextColoris = Coloris({
+        el: '#baseTextColorSetting',
+        format: 'hex',
+        alpha: false
+    });
+
+    emptyDateColoris = Coloris({
+        el: '#emptyDateColorSetting',
+        format: 'hex',
+        alpha: false
+    });
+
+    selectedEntryColoris = Coloris({
+        el: '#selectedEntryColorSetting',
+        format: 'hex',
+        alpha: false
+    });
+
+    unselectedEntryColoris = Coloris({
+        el: '#unselectedEntryColorSetting',
+        format: 'hex',
+        alpha: false
+    });
+    
+
+    mdtimepicker('#timepicker');
+
+    $('#applicationScale').rangeslider({polyfill: false});
+
+
+    $('#baseTextColorSetting').on('input', function() {
+        config.Themes[config.Settings.CurrentTheme].base = {
+            "background-color": $('#baseColorSetting').val(),
+            "color": $('#baseTextColorSetting').val()
+        };
+        updateTheme();
+    });
+
+    $('#baseColorSetting').on('input', function() {
+        config.Themes[config.Settings.CurrentTheme].base = {
+            "background-color": $('#baseColorSetting').val(),
+            "color": $('#baseTextColorSetting').val()
+        };
+        updateTheme();
+    });
+
+    $('#emptyDateColorSetting').on('input', function() {
+        config.Themes[config.Settings.CurrentTheme].emptyDate = {
+            "background-color": $('#emptyDateColorSetting').val()
+        };
+        updateTheme();
+    });
+
+    $('#selectedEntryColorSetting').on('input', function() {
+        config.Themes[config.Settings.CurrentTheme].selectedEntry = {
+            "background-color": $('#selectedEntryColorSetting').val()
+        };
+        updateTheme();
+    });
+
+    $('#unselectedEntryColorSetting').on('input', function() {
+        config.Themes[config.Settings.CurrentTheme].unselectedEntry = {
+            "background-color": $('#unselectedEntryColorSetting').val()
+        };
+        updateTheme();
+    });
+
+    currentThemeSelector.on('change', function() {
+        config.Settings.CurrentTheme = currentThemeSelector.val();
+        updateTheme();
+    });
+
+    $('#notificationsEnabled').on('change', function() {
+        config.Settings.DailyNotifications.Enabled = $('#notificationsEnabled').prop('checked');
+    });
+
+    $('#notificationMessage').on('change', function() {
+        config.Settings.DailyNotifications.NotificationMessage = $('#notificationMessage').val();
+    });
+
+    $('#timepicker').on('change', function() {
+        config.Settings.DailyNotifications.Time = $('#timepicker').val();
+    });
+
+    $('#testNotification').on("click", function() {
+        fireNotification();
+    });
+
+    $('#isPastReadOnly').on('change', function() {
+        config.Settings.IsPastReadOnly = !$('#isPastReadOnly').prop('checked');
+        isPastReadonly = config.Settings.IsPastReadOnly;
+    });
+
+    $('#closeToTray').on('change', function() {
+        config.Settings.CloseToTray = $('#closeToTray').prop('checked');
+    });
+
+    $('#applicationScale').on('change', function() {
+        console.log($('#applicationScale').val());
+        config.Settings.ApplicationScale = (Number)($('#applicationScale').val());
+        webFrame.setZoomFactor(config.Settings.ApplicationScale);
+    });
+
+    $('#resetToDefault').on('click', function() {
+        ipcRenderer.sendSync("reset-config");
+    });
+
+    $('#openConfigFile').on('click', function() {
+        ipcRenderer.sendSync("open-config-file");
+    });
+
+    $('#showConfigFile').on('click', function() {
+        ipcRenderer.sendSync("show-config-file");
+    });
+
+    $('#openEntryPathButton').on('click', function() {
+        ipcRenderer.sendSync("show-jrnl-entries", documentsPath);
+    });
+    
+    $('#toggleDebugMode').on('click', function() {
+        ipcRenderer.sendSync("toggle-debug");
+    });
+
+    $('#entryPathButton').on('click', function() {
+        // var path = dialog.showOpenDialog({
+        //     properties: ['openDirectory']
+        // });
+        let path = ipcRenderer.sendSync("get-folder-path");
+        console.log(path);
+
+        if(path != undefined && path != "") {
+            config.Settings.jrnlEntryPath = path + "\\JRNL Entries";
+            updateDocumentsPath(config.Settings.jrnlEntryPath);
+            $('#entryPath').html(config.Settings.jrnlEntryPath);
+        }
+    });
+
+
+}
+
+function setupSettingHints() {
+    $("#arePreviousEntriesEditableSetting").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Are Previous Entries Editable?</h4>
+                This setting determines if previous entries can be edited.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#closeJRNLToTraySetting").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Close to Tray</h4>
+                Enabling this setting causes the app to minimize to the system tray when closed.
+                <br><br>
+                <b>This is required for notificatons to work.</b>
+                <br><br>
+                JRNL must be restarted for changes to this setting to take effect.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#applicationScaleSetting").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Application Scale</h4>
+                Scales the entire UI by this factor.
+                <br><br>
+                Use this if the font size is too small.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#notificationEnabledSetting").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Notifications Enabled</h4>
+                Enable this for daily notifications.
+                <br><br>
+                <b>Requires "Close to Tray" to be enabled.</b>
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#notificationTimeSetting").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Notification Time</h4>
+                This setting controls the time of day that the daily notification occurs.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#notificationMessageSetting").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Notification Message</h4>
+                Change the message that appears in the daily notification.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#currentThemeSetting").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Current Theme</h4>
+                Select one of the themes from the config file. 
+                <br><br>
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#baseTextColorSettingHint").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Base Text Color</h4>
+                This modifies the text color of the entire app for the current theme.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#baseColorSettingHint").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Base Color</h4>
+                This modifies the background color of the entire app for the current theme.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#emptyDateSettingHint").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Empty Date Color</h4>
+                This modifies the color of dates on the calendar that do not have
+                 entries associated to them for the current theme.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#selectedEntrySettingHint").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Selected Entry Color</h4>
+                This modifies the color of the selected entry on the calendar for the current theme.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#unselectedEntryColorSettingHint").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Unselected Entry Color</h4>
+                This modifies the color of all the unselected entries on the calendar for the current theme.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#entryPathButton").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Current JRNL Entry Folder Location</h4>
+                Change the folder where JRNL entries are stored.
+                <br><br>
+                Changing folders will copy all existing entries from the current folder into a new "JRNL Entries" folder at the selected destination.
+                <br><br>
+                <b>You must manually delete the old "JRNL Entries" folder.</b>
+                <br><br>
+                The default location is "...\\Documents\\JRNL Entries"
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#openEntryPathButton").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Open JRNL Entry Folder Location</h4>
+                Highlight the JRNL Entry folder in the default file explorer.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#configFileSettings").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Config Settings</h4>
+                To access more advanced settings, you must directly modify the config.json file.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#resetToDefault").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Reset Settings to Default</h4>
+                This will reset the config file to its default values and restart the app. 
+                <br><br>
+                This does not delete any JRNL entries but it will reset the JRNL folder location to
+                the default.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+
+    $("#toggleDebugMode").on({
+        mouseenter: function () {
+            $("#settingsDescription").html(`
+                <h4>Toggle Debug Console</h4>
+                This will toggle the developer console. It is not recommened to use this unless you know what you're doing.
+            `);
+        },
+        mouseleave: function () {
+            $("#settingsDescription").html("");
+        }
+    });
+}
+
+function formatAMPM(date) {
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    let ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    minutes = minutes.toString().padStart(2, '0');
+    let strTime = hours + ':' + minutes + ' ' + ampm;
+    return strTime;
+  }
+
 function sendNotification() {
     let d = new Date();
-    let goalTime = config.Settings.DailyNotifications.Time.split(":");
-    let goalHours = parseInt(goalTime[0]);// + (parseInt(goalTime[0]) == 12 && goalTime[1].substring(2,4) === "am") ? -12 : (goalTime[1].substring(2,4) === "pm" && parseInt(goalTime[0]) < 12 ? 12 : 0);
-    goalHours = goalHours != 12 && goalTime[1].substring(2,4) === "pm" ? goalHours + 12 : goalHours;
-    goalHours = goalHours == 12 && goalTime[1].substring(2,4) === "am" ? goalHours - 12 : goalHours;
 
-    if(d.getHours() == goalHours && d.getMinutes() == goalTime[1].substring(0,2)) {
-        console.log("SENDING NOTIFICATION")
-
-        let myNotification = new Notification('JRNL', {
-            body: config.Settings.DailyNotifications.NotificationMessage
-        })
-    
-        myNotification.onclick = () => {
-            remote.BrowserWindow.getAllWindows()[0].show();
-        }
-
+    if(config.Settings.DailyNotifications.Time == formatAMPM(d)) {
+        fireNotification();
     }
 
+}
+
+function fireNotification() {
+    console.log("SENDING NOTIFICATION")
+
+    console.log(config.Settings.DailyNotifications.Time);
+
+    ipcRenderer.sendSync("send-notification", config.Settings.DailyNotifications.NotificationMessage);
+
+
+    // let d = new Date();
+
+    // console.log(formatAMPM(d));
+    
+
+    // let myNotification = new Notification('Daily JRNL Reminder', {
+    //     body: config.Settings.DailyNotifications.NotificationMessage
+    // })
+
+    // myNotification.show();
+
+    // myNotification.onclick = () => {
+    //     remote.BrowserWindow.getAllWindows()[0].show();
+    // }
 }
 
 function buildCalendar() {
@@ -402,10 +942,11 @@ window.addEventListener('unload', function(event) {
     
 })
 
-remote.getCurrentWindow().on('close', (e) => {
-    saveConfig();
-    saveFile(currentDateString);
-})
+// remote.getCurrentWindow().on('close', (e) => {
+//     saveConfig();
+//     saveFile(currentDateString);
+// })
+
 
 function saveConfig() {
     fs.writeFileSync("config.json", JSON.stringify(config, null, "\t"));
@@ -415,6 +956,8 @@ function saveFile(name) {
 
     var content = $("#summernote").summernote('code');
     var fileName = documentsPath + "\\" + name + fileExtension;
+
+    $("#save").hide();
 
     if($("#summernote").summernote('isEmpty')) {
         if(fs.existsSync(fileName)) {
@@ -437,7 +980,6 @@ function saveFile(name) {
     
     }
 
-    $("#save").hide();
 }
 
 function populateYear() {
@@ -478,6 +1020,9 @@ function openFile(name) {
                 $("#summernote").summernote('disable');
             } else {
                 $("#summernote").summernote('enable');
+                setTimeout(function() {
+                    $('.note-editable').trigger('focus');
+                }, 100);
             }
         });    
     } else {
@@ -491,10 +1036,14 @@ function openFile(name) {
                 $("#summernote").summernote('disable');
             } else {
                 $("#summernote").summernote('enable');
+                setTimeout(function() {
+                    $('.note-editable').trigger('focus');
+                }, 100);
             }
     }
 
 }
+
 
 //Converts the datestring to a human readable date "MONTH/DATE" 
 const months = [

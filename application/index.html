@@ -14,11 +14,23 @@
     <script src="jquery-3.6.0.min.js"></script> 
     <script src="bootstrap.min.js"></script> 
 
-    <!-- include summernote css/js -->
-    <link href="summernote.css" rel="stylesheet">
-    <script src="summernote.js"></script> 
+    <link rel="stylesheet" href="coloris.min.css"/>
+    <script src="coloris.min.js"></script>
 
+    <!-- include summernote css/js -->
+    <link href="summernote-bs4.min.css" rel="stylesheet">
+    <script src="summernote-bs4.min.js"></script> 
+
+    <link href="mdtimepicker.min.css" rel="stylesheet">
+    <script src="mdtimepicker.min.js"></script> 
+
+    <link href="rangeslider.css" rel="stylesheet">
+    <script src="rangeslider.js"></script> 
+
+    <link rel="stylesheet" href="bttn.min.css">
+    <link rel="stylesheet" href="pretty-checkbox.min.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="input-styles.css">
     <script src="body.js"></script> 
 
     <!-- Insert this line after script imports -->
@@ -47,6 +59,119 @@
             <div id="yearSelectNext" class="yearButton yearButtonRight noselect">></div>
           </div>
         </div>
+
+        <div id="settings" class="settings">
+          <div id="settingsBackButton" class="titlebarButton icon-settingsBack"></div>  
+          <div id="settingsContent" class="settingsContent">
+            <div class="settingsItems">
+              <div class="setting-category">
+              <h3>General Settings:</h3>
+              <hr>
+              <div class="setting" id="arePreviousEntriesEditableSetting">
+                <label class="setting-label">Are Previous Entries Editable?</label>
+                <input class="setting-input" id="isPastReadOnly" type="checkbox" />
+              </div>
+              <div class="setting" id="closeJRNLToTraySetting">
+                <label class="setting-label">Close to Tray (Requires App Restart)</label>
+                <input class="setting-input" id="closeToTray" type="checkbox" />
+              </div>
+              <div class="setting" id="applicationScaleSetting">
+                <label class="setting-label"> Application Scale</label>
+                <div class="setting-input thick"  style="margin-top: 10px;">
+                  <input  id="applicationScale" type="range" min="0.5" max="2.5" step="0.1" value="1">
+                </div>
+              </div>
+            </div>
+            <div class="setting-category">
+              <h3>Notification Settings:</h3>
+              <hr>
+              <div class="setting" id="notificationEnabledSetting">
+                <label class="setting-label">Notifications Enabled</label>
+                <input class="setting-input" id="notificationsEnabled" type="checkbox" />
+              </div>
+              <div class="setting" id="notificationTimeSetting">
+                <label class="setting-label">Notification Time</label>
+                <input class="setting-input thick" type="text" id="timepicker"/>
+              </div>
+              <div class="setting" id="notificationMessageSetting">
+                <label class="setting-label">Notification Message</label>
+                <textarea class="setting-input thick" id="notificationMessage" type="text"/></textarea> 
+              </div>
+              
+              <button id="testNotification" class="bttn-simple bttn-md bttn-primary setting-input thick" style="background-color: gray;">Test Notification</button>
+            </div>
+            <div class="setting-category">
+              <h3>Custom Theme:</h3>
+              <hr>
+              <div class="setting" id="currentThemeSetting">
+                <label class="setting-label">Current Theme</label>
+                <select class="setting-input thick" id="currentTheme"></select>
+              </div>
+              <div class="setting" id="baseTextColorSettingHint">
+                <label class="setting-label">Base Text Color</label>
+                <div class="setting-input">
+                  <input  id="baseTextColorSetting" type="text">
+                </div>
+              </div>
+              <div class="setting" id="baseColorSettingHint">
+                <label class="setting-label">Base Color</label>
+                <div class="setting-input">
+                  <input id="baseColorSetting" type="text"> 
+                </div>
+              </div>
+              <div class="setting" id="emptyDateSettingHint">
+                <label class="setting-label">Empty Date Color</label>
+                <div class="setting-input">
+                  <input id="emptyDateColorSetting" type="text"> 
+                </div>
+              </div>
+              <div class="setting" id="selectedEntrySettingHint">
+                <label class="setting-label">Selected Entry Color</label>
+                <div class="setting-input">
+                  <input id="selectedEntryColorSetting" type="text"> 
+                </div>
+              </div>
+              <div class="setting" id="unselectedEntryColorSettingHint">
+                <label class="setting-label">Unselected Entry Color</label>
+                <div class="setting-input">
+                  <input id="unselectedEntryColorSetting" type="text">             
+                </div>
+              </div>
+            </div>
+            <div class="setting-category">
+              <h3>Advanced Settings:</h3>
+              <hr>
+              <div class="setting" id="currentEntryFolderSetting">
+                <div style="display: flow-root; flex-direction: column;">
+                  <label class="setting-label">Current JRNL Entry Folder Location</label>
+                  <div class="setting-input thick" id="entryPath"></div>
+                </div>
+                <div class="setting" id="configFileSettings">
+                  <button id="openEntryPathButton" class="bttn-simple bttn-md bttn-primary" style="background-color: gray;">Open JRNL Entry Folder</button>
+                  <button id="entryPathButton" class="bttn-simple bttn-md bttn-primary" style="background-color: rgb(228, 40, 40);">Change JRNL Entry Folder</button>
+               </div>
+              </div>
+              <hr>
+              <div class="setting" id="configFileSettings">
+                <button id="openConfigFile" class="bttn-simple bttn-md bttn-primary" style="background-color: gray;">Open Config File</button>
+                <button id="showConfigFile" class="bttn-simple bttn-md bttn-primary" style="background-color: gray;">Show Config File in Explorer</button>
+              </div>
+              <hr>
+              <button id="resetToDefault" class="bttn-simple bttn-md bttn-primary" style="background-color: rgb(228, 40, 40);">Reset Settings to Defaults</button>
+              <button id="toggleDebugMode" class="bttn-simple bttn-md bttn-primary" style="background-color: gray;">Toggle Debug Console</button>  
+              <hr>
+              <div>JRNL v2.0 | Copyright 2022 Saul Amster All Rights Reserved</div>
+            </div>
+          
+          
+            </div>
+            <div id="settingsDescription" class="settingsDescription">
+            </div>
+            
+          </div>          
+        </div>
+        <div id="settingsButton" class="titlebarButton icon-settings"></div>
+
         <div class="loadScreen base"></div>
         
   </body>

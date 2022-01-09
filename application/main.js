@@ -3,17 +3,18 @@
   @Blarfnip
 */
 
-const { app, BrowserWindow ,Menu, MenuItem, Tray} = require('electron')
+const { app, BrowserWindow ,Menu, MenuItem, Tray, ipcMain, Notification, shell, dialog} = require('electron')
+
 var fs = require('fs');
 const path = require('path');
-
+// const notifier = require('node-notifier');
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win = null;
 let tray = null;
 
 const menu = new Menu()
-var config = {
+var defaultConfig = {
 	"Hotkeys": {
 		"NextTheme": "Alt+=",
 		"NextYear": "Alt+PageDown",
@@ -29,44 +30,49 @@ var config = {
     "JumpToToday": "Home"
 	},
 	"Settings": {
+    "jrnlEntryPath": "",
+    "ApplicationScale": 1,
     "CurrentTheme": 3,
     "IsPastReadOnly": true,
     "CloseToTray": true,
+    "OpenDebugAtStartup": false,
     "DailyNotifications": {
       "Enabled": true,
-      "Time": "07:30pm",
+      "Time": "07:30 PM",
       "NotificationMessage": "Don't forget to add to your JRNL today!"
     },
     "WindowBounds": {
       "x": 50,
       "y": 50,
-      "width": 950,
-      "height": 600
+      "width": 1300,
+      "height": 900
     },
 	},
 	"Themes": [
 		{
+			"name": "Dusty Grape",
 			"base": {
-				"background-color": "#836c89",
-				"color": "#e0d5e2"
+				"background-color": "#9f7ea8",
+				"color": "#1c1c1c"
 			},
 			"emptyDate": {
 				"background-color": "#a99aad"
 			},
 			"selectedEntry": {
-				"background-color": "#dbace2"
+				"background-color": "#ededed"
 			},
 			"unselectedEntry": {
-				"background-color": "#93bbd6"
+				"background-color": "#8362a6"
 			}
 		},
 		{
+			"name": "Whiteout",
 			"base": {
-				"background-color": "#ffffff",
+				"background-color": "#fcfcfc",
 				"color": "#000000"
 			},
 			"emptyDate": {
-				"background-color": "#222222"
+				"background-color": "#d9d9d9"
 			},
 			"selectedEntry": {
 				"background-color": "#aaaaaa"
@@ -76,12 +82,13 @@ var config = {
 			}
 		},
 		{
+			"name": "Black Hole",
 			"base": {
 				"background-color": "#000000",
 				"color": "#ffffff"
 			},
 			"emptyDate": {
-				"background-color": "#dddddd"
+				"background-color": "#0f0f0f"
 			},
 			"selectedEntry": {
 				"background-color": "#444444"
@@ -91,6 +98,7 @@ var config = {
 			}
 		},
 		{
+      "name": "Just Peachy",
 			"base": {
 				"background-color": "#fcebe6",
 				"color": "#7d7572"
@@ -105,7 +113,24 @@ var config = {
 				"background-color": "#fdb39a"
 			}
 		},
+    {
+			"name": "Slate",
+			"base": {
+				"background-color": "#363636",
+				"color": "#e0e0e0"
+			},
+			"emptyDate": {
+				"background-color": "#212121"
+			},
+			"selectedEntry": {
+				"background-color": "#f0f0f0"
+			},
+			"unselectedEntry": {
+				"background-color": "#888888"
+			}
+		},
 		{
+      "name": "Aviator",
 			"base": {
 				"background-color": "#214c80",
 				"color": "#e6f0fc"
@@ -119,7 +144,103 @@ var config = {
 			"unselectedEntry": {
 				"background-color": "#b7bfc9"
 			}
-		}
+		},
+		{
+			"name": "Sub Rosa",
+			"base": {
+				"background-color": "#ffd7e7",
+				"color": "#696161"
+			},
+			"emptyDate": {
+				"background-color": "#f7f7f7"
+			},
+			"selectedEntry": {
+				"background-color": "#404040"
+			},
+			"unselectedEntry": {
+				"background-color": "#969696"
+			}
+		},
+    {
+			"name": "Mango",
+			"base": {
+				"background-color": "#ffcd78",
+				"color": "#606169"
+			},
+			"emptyDate": {
+				"background-color": "#948579"
+			},
+			"selectedEntry": {
+				"background-color": "#ffffff"
+			},
+			"unselectedEntry": {
+				"background-color": "#bdbdbd"
+			}
+		},
+    {
+			"name": "Verdant",
+			"base": {
+				"background-color": "#4c7a49",
+				"color": "#edede7"
+			},
+			"emptyDate": {
+				"background-color": "#628f5f"
+			},
+			"selectedEntry": {
+				"background-color": "#c7b772"
+			},
+			"unselectedEntry": {
+				"background-color": "#b0b0b0"
+			}
+		},
+    {
+			"name": "Ivory",
+			"base": {
+				"background-color": "#f2f2f2",
+				"color": "#404040"
+			},
+			"emptyDate": {
+				"background-color": "#c9c6b6"
+			},
+			"selectedEntry": {
+				"background-color": "#f0be0b"
+			},
+			"unselectedEntry": {
+				"background-color": "#c4a95c"
+			}
+		},
+    {
+			"name": "Crimson",
+			"base": {
+				"background-color": "#5e0f0c",
+				"color": "#f5f5f5"
+			},
+			"emptyDate": {
+				"background-color": "#661b0d"
+			},
+			"selectedEntry": {
+				"background-color": "#d9b515"
+			},
+			"unselectedEntry": {
+				"background-color": "#ded1d1"
+			}
+		},
+    {
+			"name": "Sea Foam",
+			"base": {
+				"background-color": "#d0f5f4",
+				"color": "#236e62"
+			},
+			"emptyDate": {
+				"background-color": "#b7e1e3"
+			},
+			"selectedEntry": {
+				"background-color": "#1fd6b8"
+			},
+			"unselectedEntry": {
+				"background-color": "#4a5f8c"
+			}
+		},
 	]
 };
 
@@ -138,22 +259,114 @@ function loadConfig() {
           return;
       }
       
-      config = JSON.parse(data);
+      let config = JSON.parse(data);
       loadConfigData(config);
     });
   } else {
-    var data = JSON.stringify(config, null, "\t");
+    var data = JSON.stringify(defaultConfig, null, "\t");
     fs.writeFile("config.json", data, (err) => {
-      loadConfigData(config);
+      loadConfigData(JSON.parse(data));
     });
   }
 }
+
+ipcMain.on('reset-config', (event, someArgument) => {
+  fs.unlinkSync("config.json");
+  let oldWin = win;
+  loadConfig();
+  oldWin.close();
+  event.returnValue = "info";
+});
+
+ipcMain.on('toggle-debug', (event, someArgument) => {
+  win.toggleDevTools();
+  event.returnValue = "info";
+});
+
+ipcMain.on('get-folder-path', (event, someArgument) => {
+  let path = dialog.showOpenDialogSync({
+    properties: ['openDirectory']
+  });
+  event.returnValue = path;
+});
+
+ipcMain.on('is-window-visible', (event, someArgument) => {
+  event.returnValue = win.isFocused();
+});
+
+ipcMain.on('send-notification', (event, someArgument) => {
+  // notifier.notify(
+  //   {
+  //     title: 'Daily JRNL Reminder',
+  //     message: someArgument,
+  //     icon: path.join(__dirname, 'jrnlicon.png'), // Absolute path (doesn't work on balloons)
+  //     sound: true, // Only Notification Center or Windows Toasters
+  //     wait: true // Wait with callback, until user action is taken against notification, does not apply to Windows Toasters as they always wait or notify-send as it does not support the wait option
+  //   },
+  //   function (err, response, metadata) {
+  //     // Response is response from notification
+  //     // Metadata contains activationType, activationAt, deliveredAt
+  //   }
+  // );
+  
+  // notifier.on('click', function (notifierObject, options, event) {
+  //   win.show();
+  //   setTimeout(() => {
+  //     win.focus();
+  //     win.webContents.send('jumpToToday');
+  //   }, 200);
+  // });
+  
+  
+  var myNotification = new Notification({
+      title: 'Daily JRNL Reminder',
+    body: someArgument,
+    icon: path.join(__dirname, 'jrnlicon.png'), // Absolute path (doesn't work on balloons)   
+  })
+
+  myNotification.show();
+
+  myNotification.on('click', () => {
+    win.show();
+    setTimeout(() => {
+      win.focus();
+      win.webContents.send('jumpToToday');
+    }, 200);
+  });
+
+  event.returnValue = "info";
+});
+
+ipcMain.on('minimize-button', (event, someArgument) => {
+  win.minimize();
+  event.returnValue = "info";
+});
+
+ipcMain.on('close-button', (event, someArgument) => {
+  win.close();
+  event.returnValue = "info";
+});
+
+ipcMain.on('open-config-file', (event, someArgument) => {
+  shell.openExternal(app.getAppPath() + "\\config.json");
+  event.returnValue = "info";
+});
+
+ipcMain.on('show-config-file', (event, someArgument) => {
+  shell.showItemInFolder(app.getAppPath() + "\\config.json");
+  event.returnValue = "info";
+});
+
+ipcMain.on('show-jrnl-entries', (event, someArgument) => {
+  shell.showItemInFolder(someArgument);
+  event.returnValue = "info";
+});
 
 function loadConfigData(data) {
   //Create Hotkey for Esc to close application
   menu.append(new MenuItem({
     label: 'Quit',
-    accelerator: config.Hotkeys.Quit,
+    accelerator: data.Hotkeys.Quit,
     click: () => { 
       win.close()
       app.quit()
@@ -163,7 +376,7 @@ function loadConfigData(data) {
   //Create Hotkey for Ctrl/Cmd+S to save entry
   menu.append(new MenuItem({
     label: 'Save',
-    accelerator: config.Hotkeys.Save,
+    accelerator: data.Hotkeys.Save,
     click: () => { 
         win.webContents.send('saveFile');
     }
@@ -171,7 +384,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Export Current Year',
-    accelerator: config.Hotkeys.ExportCurrentYear,
+    accelerator: data.Hotkeys.ExportCurrentYear,
     click: () => { 
         win.webContents.send('exportCurrentYear');
     }
@@ -179,7 +392,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Previous Year',
-    accelerator: config.Hotkeys.PreviousYear,
+    accelerator: data.Hotkeys.PreviousYear,
     click: () => { 
         win.webContents.send('prevYear');
     }
@@ -188,7 +401,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Next Year',
-    accelerator: config.Hotkeys.NextYear,
+    accelerator: data.Hotkeys.NextYear,
     click: () => { 
         win.webContents.send('nextYear');
     }
@@ -197,7 +410,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Select Left Entry',
-    accelerator: config.Hotkeys.SelectLeftEntry,
+    accelerator: data.Hotkeys.SelectLeftEntry,
     click: () => { 
         win.webContents.send('leftSelection');
     }
@@ -206,7 +419,7 @@ function loadConfigData(data) {
   
   menu.append(new MenuItem({
     label: 'Select Right Entry',
-    accelerator: config.Hotkeys.SelectRightEntry,
+    accelerator: data.Hotkeys.SelectRightEntry,
     click: () => { 
         win.webContents.send('rightSelection');
     }
@@ -214,7 +427,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Select Up Entry',
-    accelerator: config.Hotkeys.SelectAboveEntry,
+    accelerator: data.Hotkeys.SelectAboveEntry,
     click: () => { 
         win.webContents.send('upSelection');
     }
@@ -222,7 +435,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Select Down Entry',
-    accelerator: config.Hotkeys.SelectBelowEntry,
+    accelerator: data.Hotkeys.SelectBelowEntry,
     click: () => { 
         win.webContents.send('downSelection');
     }
@@ -230,7 +443,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Next Theme',
-    accelerator: config.Hotkeys.NextTheme,
+    accelerator: data.Hotkeys.NextTheme,
     click: () => { 
         win.webContents.send('setTheme', 1);
     }
@@ -238,7 +451,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Previous Theme',
-    accelerator: config.Hotkeys.PreviousTheme,
+    accelerator: data.Hotkeys.PreviousTheme,
     click: () => { 
         win.webContents.send('setTheme', -1);
     }
@@ -246,7 +459,7 @@ function loadConfigData(data) {
 
   menu.append(new MenuItem({
     label: 'Jump to Today',
-    accelerator: config.Hotkeys.JumpToToday,
+    accelerator: data.Hotkeys.JumpToToday,
     click: () => { 
         win.webContents.send('jumpToToday');
     }
@@ -260,26 +473,37 @@ function loadConfigData(data) {
     app.on('second-instance', (event, commandLine, workingDirectory) => {
       // Someone tried to run a second instance, we should focus our window.
       if (win) {
-        if (win.isMinimized()) win.restore()
-        win.focus()
+        win.show();
+        setTimeout(() => {
+          win.focus();
+        }, 200);
       }
     })
 
     // Create myWindow, load the rest of the app, etc...
     // Create the browser window.
     win = new BrowserWindow({
-      width: config.Settings.WindowBounds.width,
-      height: config.Settings.WindowBounds.width,
-      x: config.Settings.WindowBounds.x,
-      y: config.Settings.WindowBounds.y,
+      width: data.Settings.WindowBounds.width,
+      height: data.Settings.WindowBounds.width,
+      x: data.Settings.WindowBounds.x,
+      y: data.Settings.WindowBounds.y,
       frame: false, backgroundColor:
-      config.Themes[config.Settings.CurrentTheme].base["background-color"],
+      data.Themes[data.Settings.CurrentTheme].base["background-color"],
       show: false,
-      icon: path.resolve(__dirname, 'icon.ico')
+      icon: path.resolve(__dirname, 'icon.ico'),
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+        enableRemoteModule: true,
+      }
     })
 
+    if (process.platform === 'win32')
+    {
+        app.setAppUserModelId("JRNL");
+    }
 
-    if(config.Settings.CloseToTray) {
+    if(data.Settings.CloseToTray) {
       tray = new Tray(path.resolve(__dirname, 'icon.ico'))
       const contextMenu = Menu.buildFromTemplate([
         new MenuItem({
@@ -317,13 +541,20 @@ function loadConfigData(data) {
 
     // Open the DevTools.
     //Uncomment this to debug
-    win.webContents.openDevTools()
+    if(data.Settings.OpenDebugAtStartup) {
+      win.webContents.openDevTools();
+    }
+    // win.webContents.openDevTools();
 
 
     //When page loads give it the correct path to save entries
     win.webContents.on('did-finish-load', () => {
-      win.webContents.send('updateConfig', config);
-      win.webContents.send('updateDocPath', app.getPath('documents'));
+
+      if(data.Settings.jrnlEntryPath == "") {
+        data.Settings.jrnlEntryPath = app.getPath('documents') + "\\JRNL Entries";
+      }
+
+      win.webContents.send('updateConfig', data);
     });
 
     win.on('ready-to-show', () => {
@@ -337,12 +568,18 @@ function loadConfigData(data) {
       win.webContents.send('updateConfigWindowSize', win.getBounds());
     });
 
+    win.on('show', () => {
+      win.webContents.send('refreshPage', win.getBounds());
+    });
+
 
     win.on('close', (event) => {
-        if(config.Settings.CloseToTray) {
-          event.preventDefault();
-          win.hide();
-        }
+      win.webContents.send('windowClose', win.getBounds());
+
+      if(data.Settings.CloseToTray) {
+        event.preventDefault();
+        win.hide();
+      }
     });
 
     // Emitted when the window is closed.
@@ -357,11 +594,8 @@ function loadConfigData(data) {
   //Setup menu(hotkeys)
   win.setMenu(menu);
 
-  win.setBounds(config.Settings.WindowBounds);
+  win.setBounds(data.Settings.WindowBounds);
   }
-
-  
-  
 }
 
 
@@ -370,6 +604,8 @@ function loadConfigData(data) {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', createWindow)
+
+app.on('ready', () => app.setAppUserModelId("com.electron.jrnl"));
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {

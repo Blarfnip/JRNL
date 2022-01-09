@@ -1,58 +1,62 @@
 {
 	"Hotkeys": {
-		"ExportCurrentYear": "Alt+CmdOrCtrl+Y",
-		"JumpToToday": "Home",
 		"NextTheme": "Alt+=",
 		"NextYear": "Alt+PageDown",
 		"PreviousTheme": "Alt+-",
 		"PreviousYear": "Alt+PageUp",
 		"Quit": "Esc",
 		"Save": "CmdOrCtrl+S",
+		"ExportCurrentYear": "Alt+CmdOrCtrl+Y",
 		"SelectAboveEntry": "Alt+Up",
 		"SelectBelowEntry": "Alt+Down",
 		"SelectLeftEntry": "Alt+Left",
-		"SelectRightEntry": "Alt+Right"
+		"SelectRightEntry": "Alt+Right",
+		"JumpToToday": "Home"
 	},
 	"Settings": {
+		"jrnlEntryPath": "E:\\Documents\\JRNL Entries",
+		"ApplicationScale": 1.1,
+		"CurrentTheme": "9",
+		"IsPastReadOnly": true,
 		"CloseToTray": true,
-		"CurrentTheme": 3,
+		"OpenDebugAtStartup": false,
 		"DailyNotifications": {
 			"Enabled": true,
-			"NotificationMessage": "Don't forget to add to your JRNL today!",
-			"Time": "1:42pm"
+			"Time": "10:17 PM",
+			"NotificationMessage": "Don't forget to add to your JRNL today!"
 		},
-		"IsPastReadOnly": true,
 		"WindowBounds": {
-			"height": 554,
-			"width": 1323,
-			"x": 1869,
-			"y": 719
+			"x": 1272,
+			"y": 266,
+			"width": 1300,
+			"height": 899
 		}
 	},
 	"Themes": [
 		{
+			"name": "Dusty Grape",
 			"base": {
-				"background-color": "#836c89",
-				"color": "#e0d5e2"
+				"background-color": "#9f7ea8",
+				"color": "#1c1c1c"
 			},
 			"emptyDate": {
 				"background-color": "#a99aad"
 			},
 			"selectedEntry": {
-				"background-color": "#dbace2"
+				"background-color": "#ededed"
 			},
 			"unselectedEntry": {
-				"background-color": "#93bbd6"
+				"background-color": "#8362a6"
 			}
 		},
 		{
+			"name": "Whiteout",
 			"base": {
-				"background-color": "#ffffff",
-				"color": "#000000",
-				"font-family": "'Raleway', sans-serif;"
+				"background-color": "#fcfcfc",
+				"color": "#000000"
 			},
 			"emptyDate": {
-				"background-color": "#222222"
+				"background-color": "#d9d9d9"
 			},
 			"selectedEntry": {
 				"background-color": "#aaaaaa"
@@ -62,13 +66,13 @@
 			}
 		},
 		{
+			"name": "Black Hole",
 			"base": {
 				"background-color": "#000000",
-				"color": "#ffffff",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#ffffff"
 			},
 			"emptyDate": {
-				"background-color": "#dddddd"
+				"background-color": "#0f0f0f"
 			},
 			"selectedEntry": {
 				"background-color": "#444444"
@@ -78,10 +82,10 @@
 			}
 		},
 		{
+			"name": "Just Peachy",
 			"base": {
 				"background-color": "#fcebe6",
-				"color": "#7d7572",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#7d7572"
 			},
 			"emptyDate": {
 				"background-color": "#c9bcb7"
@@ -94,10 +98,26 @@
 			}
 		},
 		{
+			"name": "Slate",
+			"base": {
+				"background-color": "#363636",
+				"color": "#e0e0e0"
+			},
+			"emptyDate": {
+				"background-color": "#212121"
+			},
+			"selectedEntry": {
+				"background-color": "#f0f0f0"
+			},
+			"unselectedEntry": {
+				"background-color": "#888888"
+			}
+		},
+		{
+			"name": "Aviator",
 			"base": {
 				"background-color": "#214c80",
-				"color": "#e6f0fc",
-				"font-family": "'Raleway', sans-serif;"
+				"color": "#e6f0fc"
 			},
 			"emptyDate": {
 				"background-color": "#72777d"
@@ -107,6 +127,102 @@
 			},
 			"unselectedEntry": {
 				"background-color": "#b7bfc9"
+			}
+		},
+		{
+			"name": "Sub Rosa",
+			"base": {
+				"background-color": "#ffd7e7",
+				"color": "#696161"
+			},
+			"emptyDate": {
+				"background-color": "#f7f7f7"
+			},
+			"selectedEntry": {
+				"background-color": "#404040"
+			},
+			"unselectedEntry": {
+				"background-color": "#969696"
+			}
+		},
+		{
+			"name": "Mango",
+			"base": {
+				"background-color": "#ffcd78",
+				"color": "#606169"
+			},
+			"emptyDate": {
+				"background-color": "#e3c6b2"
+			},
+			"selectedEntry": {
+				"background-color": "#66460e"
+			},
+			"unselectedEntry": {
+				"background-color": "#bdbdbd"
+			}
+		},
+		{
+			"name": "Verdant",
+			"base": {
+				"background-color": "#4c7a49",
+				"color": "#edede7"
+			},
+			"emptyDate": {
+				"background-color": "#628f5f"
+			},
+			"selectedEntry": {
+				"background-color": "#c7b772"
+			},
+			"unselectedEntry": {
+				"background-color": "#b0b0b0"
+			}
+		},
+		{
+			"name": "Ivory",
+			"base": {
+				"background-color": "#f2f2f2",
+				"color": "#404040"
+			},
+			"emptyDate": {
+				"background-color": "#c9c6b6"
+			},
+			"selectedEntry": {
+				"background-color": "#f0be0b"
+			},
+			"unselectedEntry": {
+				"background-color": "#c4a95c"
+			}
+		},
+		{
+			"name": "Crimson",
+			"base": {
+				"background-color": "#5e0f0c",
+				"color": "#f5f5f5"
+			},
+			"emptyDate": {
+				"background-color": "#661b0d"
+			},
+			"selectedEntry": {
+				"background-color": "#d9b515"
+			},
+			"unselectedEntry": {
+				"background-color": "#ded1d1"
+			}
+		},
+		{
+			"name": "Sea Foam",
+			"base": {
+				"background-color": "#d0f5f4",
+				"color": "#236e62"
+			},
+			"emptyDate": {
+				"background-color": "#b7e1e3"
+			},
+			"selectedEntry": {
+				"background-color": "#1fd6b8"
+			},
+			"unselectedEntry": {
+				"background-color": "#4a5f8c"
 			}
 		}
 	]
