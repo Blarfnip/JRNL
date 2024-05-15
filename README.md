@@ -1,4 +1,12 @@
 # JRNL
+
+## ABANDONWARE NOTICE
+_As of 2024, this project is free to use and open source._  
+  
+I strongly encourage forking the repo and building on top of this project.  
+
+---
+
 #### A Simple Journaling Software for Keeping Track of Daily Thoughts
 
 Inspired by [@dittomat's](https://twitter.com/dittomat) journaling app which took inspiration from
@@ -18,19 +26,18 @@ Upon opening JRNL it will automatically open up the day's entry. If an entry doe
 #### Renaming `.jrnl` files will cause JRNL to lose track of them
 
 ## Installing
-### For Personal Use  
-Download the latest version from the [**releases**](https://github.com/Blarfnip/JRNL/releases/stable) tab in this repo and run the executable.
+Grab the application pre-compiled for windows at [itch.io](https://blarfnip.itch.io/jrnl)
 
 ### For Development
-This project is built with Node.js and Electron. To develop for this have Node.js installed and do the following:
+This project is built with Node.js and Electron. To compile from source, have Node.js installed and do the following:
 1. Clone the repo  
-2. navigate to **application** folder in a terminal  
+2. navigate to **application** folder in a terminal `cd ./application`  
 3. run `npm install`  
 4. run `npm start` to open application  
 
 #### To build an executable
 Use `npm run package-win32` to use `electron packager` to automatically build the electron app into a Win32 executable.  
 
-## Like what I do?
-I'm a college student, so if you enjoy my work please donate:  
-[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/T6T1TDCS)
+## Like this project?
+Consider purchasing it with a donation on itch.io:  
+[![Screenshot 2024-05-14 200456](https://github.com/Blarfnip/JRNL/assets/13181960/57e2a66d-da45-49e7-86b7-8e1cfbffd84c)](https://blarfnip.itch.io/jrnl)
