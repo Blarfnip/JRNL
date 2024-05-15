@@ -23,7 +23,6 @@
   "build": {
     "appId": "com.electron.jrnl",
     "productName": "JRNL",
-    "copyright": "Copyright © year Saul Amster",
     "mac": {
       "category": "public.app-category.utilities"
     },
