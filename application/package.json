@@ -1,24 +1,29 @@
 {
+  "homepage": "https://github.com/Blarfnip/JRNL",
   "name": "jrnl",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Journal",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
     "package-win32": "electron-packager . JRNL --overwrite --platform=win32 --arch=ia32 --icon=./icon.ico --prune=true --out=../releases",
-    "package-osx": "electron-packager . JRNL --overwrite --platform=darwin --arch=x64 --icon=./icon.icns --prune=true --out=../releases"
+    "package-osx": "electron-packager . JRNL --overwrite --platform=darwin --arch=x64 --icon=./icon.icns --prune=true --out=../releases",
+    "installer-linux": "electron-builder --linux"
   },
-  "author": "Saul Amster",
+  "author": {
+    "name": "Saul Amster",
+    "email": ""
+  },
   "license": "ISC",
   "devDependencies": {
-    "electron": "^16.0.7",
-    "electron-builder": "^22.8.0",
-    "electron-packager": "^13.1.1"
+    "electron": "^30.0.0",
+    "electron-builder": "^24.6.0",
+    "@electron/packager": "^18.4.2"
   },
   "dependencies": {
-    "jquery": "^3.5.0",
-    "powertoast": "^2.0.0"
+    "jquery": "^3.7.1",
+    "xmlbuilder": "^15.1.1"
   },
   "build": {
     "appId": "com.electron.jrnl",
@@ -28,6 +33,15 @@
     },
     "win": {
       "target": "msi"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "jrnlicon.png",
+      "category": "Utility",
+      "maintainer": "AJ Bradley abradley4646@gmail.com"
     }
   }
 }

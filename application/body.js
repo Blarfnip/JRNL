@@ -5,8 +5,8 @@
 
 
 var fs = require('fs');
-// var ipcRenderer = require('electron').ipcRenderer;
-const { ipcRenderer, webFrame } = require('electron');
+const path = require('path'); // Added for cross-platform paths
+const { ipcRenderer, webFrame, shell } = require('electron');
 // const {dialog} = require('electron').remote;
 
 var dates = [];
@@ -83,7 +83,7 @@ ipcRenderer.on('jumpToToday',(event, arg) => {
     }
 
     //If there exists an entry for today, open it. Else create a new entry.
-    if(fs.existsSync(documentsPath + "\\" + fileName + fileExtension)) {
+    if(fs.existsSync(path.join(documentsPath, fileName + fileExtension))) {
         openFile(fileName);
     } else {
         saveFile(currentDateString);
@@ -154,23 +154,26 @@ ipcRenderer.on('updateConfig',(event, arg) => {
     }
 });
 
-function updateDocumentsPath(path) {
-    console.log("Updating entry path: " + path);
-    if(!fs.existsSync(path)) {
-        fs.mkdirSync(path);
+function updateDocumentsPath(newPath) {
+    console.log("Updating entry path: " + newPath);
+    if(!fs.existsSync(newPath)) {
+        fs.mkdirSync(newPath, { recursive: true });
     }
 
     // Take care of old path
     if(documentsPath != "") {
         fs.readdirSync(documentsPath).forEach(file => {
             if(file.endsWith(fileExtension)) {
-                fs.copyFileSync(documentsPath + "\\" + file, path + "\\" + file);
+                fs.copyFileSync(
+                    path.join(documentsPath, file),
+                    path.join(newPath, file)
+                );
             }
         });
     }
 
     // New Path
-    documentsPath = path;
+    documentsPath = newPath;
 }
 
 
@@ -456,11 +459,11 @@ function setupSettings() {
         // var path = dialog.showOpenDialog({
         //     properties: ['openDirectory']
         // });
-        let path = ipcRenderer.sendSync("get-folder-path");
-        console.log(path);
+        let folderPath = ipcRenderer.sendSync("get-folder-path");
+        console.log(folderPath);
 
-        if(path != undefined && path != "") {
-            config.Settings.jrnlEntryPath = path + "\\JRNL Entries";
+        if(folderPath != undefined && folderPath != "") {
+            config.Settings.jrnlEntryPath = path.join(folderPath, "JRNL Entries");
             updateDocumentsPath(config.Settings.jrnlEntryPath);
             $('#entryPath').html(config.Settings.jrnlEntryPath);
         }
@@ -893,7 +896,7 @@ function onOpen() {
     var fileName = getTodaysDateString();
 
     //If there exists an entry for today, open it. Else create a new entry.
-    if(fs.existsSync(documentsPath + "\\" + fileName + fileExtension)) {
+    if(fs.existsSync(path.join(documentsPath, fileName + fileExtension))) {
         openFile(fileName);
     } else {
         saveFile(fileName);
@@ -912,7 +915,7 @@ function updateCalendar() {
             var date = (d < 10 ? '0' : '') + (d);
             var year = currentCalendarYear + "";
             var dateString = month + "" + date + "" + year;
-            var datePath = documentsPath + "\\" + dateString + fileExtension;
+            var datePath = path.join(documentsPath, dateString + fileExtension);
 
             if(fs.existsSync(datePath) || dateString == getTodaysDateString()) {
                 $("#" + dateString).css(config.Themes[config.Settings.CurrentTheme].unselectedEntry);
@@ -953,9 +956,8 @@ function saveConfig() {
 }
 
 function saveFile(name) {
-
     var content = $("#summernote").summernote('code');
-    var fileName = documentsPath + "\\" + name + fileExtension;
+    var fileName = path.join(documentsPath, name + fileExtension);
 
     $("#save").hide();
 
@@ -1000,8 +1002,7 @@ function populateYear() {
 }
 
 function openFile(name) {
-    
-    var filepath = documentsPath + "\\" +  name + fileExtension;
+    var filepath = path.join(documentsPath, name + fileExtension);
     console.log("Opening file " + filepath);
 
     if(fs.existsSync(filepath)) {
@@ -1071,7 +1072,7 @@ function updateDateDisplay(dateString) {
 }
 
 function exportYear(year) {
-    let exportPath = documentsPath + "\\" + year + ".html";
+    let exportPath = path.join(documentsPath, year + ".html");
     let exportedMarkdown = "<h1><b>JRNL " + year + "</b></h1> <p><hr><p>";
 
     for(var m = 0; m < dates.length; m++) {
@@ -1080,7 +1081,7 @@ function exportYear(year) {
             var date = (d < 10 ? '0' : '') + (d);
             var dateString = month + "" + date + "" + year; 
             var adjustedName = months[month - 1] + " " + date + ", " + year;
-            var filename = documentsPath + "\\" + dateString + fileExtension;
+            var filename = path.join(documentsPath, dateString + fileExtension);
             if(fs.existsSync(filename)) {
                 exportedMarkdown += "<hr><h1>" + adjustedName + "</h1><p>";
                 exportedMarkdown += fs.readFileSync(filename, 'utf-8').replace('`', "'") + "<p>";
@@ -1090,7 +1091,7 @@ function exportYear(year) {
 
     let exportedFile = `
         <head>
-            <script src="  https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
             <style>
                 body {
                     ` + JSON.stringify(config.Themes[config.Settings.CurrentTheme].base).replace(/\{/g, '').replace(/\}/g, '').replace(/\",/g, ';\n').replace(/\"/g, '') + `

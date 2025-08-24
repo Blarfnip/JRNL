@@ -14,9 +14,9 @@
 		"JumpToToday": "Home"
 	},
 	"Settings": {
-		"jrnlEntryPath": "E:\\Documents\\JRNL Entries",
+		"jrnlEntryPath": "",
 		"ApplicationScale": 1.1,
-		"CurrentTheme": "9",
+		"CurrentTheme": "5",
 		"IsPastReadOnly": true,
 		"CloseToTray": true,
 		"OpenDebugAtStartup": false,
@@ -26,8 +26,8 @@
 			"NotificationMessage": "Don't forget to add to your JRNL today!"
 		},
 		"WindowBounds": {
-			"x": 1272,
-			"y": 266,
+			"x": 969,
+			"y": 272,
 			"width": 1300,
 			"height": 899
 		}

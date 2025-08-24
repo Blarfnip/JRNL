@@ -253,18 +253,29 @@ function loadConfig() {
   var filepath = "config.json";
   console.log("Opening file " + filepath);
 
-  if(fs.existsSync("config.json")) {
+  if(fs.existsSync(filepath)) {
     fs.readFile(filepath, 'utf-8', (err, data) => {
       if(err){
-          return;
+        console.error("Error reading config.json:", err);
+        loadConfigData(defaultConfig);
+        return;
       }
-      
-      let config = JSON.parse(data);
-      loadConfigData(config);
+      try {
+        let config = JSON.parse(data);
+        loadConfigData(config);
+      } catch (parseErr) {
+        console.error("Error parsing config.json:", parseErr);
+        loadConfigData(defaultConfig);
+      }
     });
   } else {
     var data = JSON.stringify(defaultConfig, null, "\t");
-    fs.writeFile("config.json", data, (err) => {
+    fs.writeFile(filepath, data, (err) => {
+      if (err) {
+        console.error("Error writing default config.json:", err);
+        loadConfigData(defaultConfig);
+        return;
+      }
       loadConfigData(JSON.parse(data));
     });
   }
@@ -348,12 +359,12 @@ ipcMain.on('close-button', (event, someArgument) => {
 });
 
 ipcMain.on('open-config-file', (event, someArgument) => {
-  shell.openExternal(app.getAppPath() + "\\config.json");
+  shell.openPath(path.join(app.getAppPath(), "config.json"));
   event.returnValue = "info";
 });
 
 ipcMain.on('show-config-file', (event, someArgument) => {
-  shell.showItemInFolder(app.getAppPath() + "\\config.json");
+  shell.showItemInFolder(path.join(app.getAppPath(), "config.json"));
   event.returnValue = "info";
 });
 
@@ -484,13 +495,13 @@ function loadConfigData(data) {
     // Create the browser window.
     win = new BrowserWindow({
       width: data.Settings.WindowBounds.width,
-      height: data.Settings.WindowBounds.width,
+      height: data.Settings.WindowBounds.height,
       x: data.Settings.WindowBounds.x,
       y: data.Settings.WindowBounds.y,
       frame: false, backgroundColor:
       data.Themes[data.Settings.CurrentTheme].base["background-color"],
       show: false,
-      icon: path.resolve(__dirname, 'icon.ico'),
+      icon: process.platform === 'win32' ? path.resolve(__dirname, 'icon.ico') : path.resolve(__dirname, 'jrnlicon.png'),
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
@@ -504,7 +515,7 @@ function loadConfigData(data) {
     }
 
     if(data.Settings.CloseToTray) {
-      tray = new Tray(path.resolve(__dirname, 'icon.ico'))
+      tray = new Tray(process.platform === 'win32' ? path.resolve(__dirname, 'icon.ico') : path.resolve(__dirname, 'jrnlicon.png'));
       const contextMenu = Menu.buildFromTemplate([
         new MenuItem({
           label: "Open",
@@ -550,8 +561,9 @@ function loadConfigData(data) {
     //When page loads give it the correct path to save entries
     win.webContents.on('did-finish-load', () => {
 
-      if(data.Settings.jrnlEntryPath == "") {
-        data.Settings.jrnlEntryPath = app.getPath('documents') + "\\JRNL Entries";
+      if(data.Settings.jrnlEntryPath == "" || !fs.existsSync(data.Settings.jrnlEntryPath)) {
+        const sep = process.platform === 'win32' ? '\\' : '/';
+        data.Settings.jrnlEntryPath = app.getPath('documents') + sep + "JRNL Entries";
       }
 
       win.webContents.send('updateConfig', data);
